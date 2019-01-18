@@ -63,7 +63,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         sceneView.showsStatistics = true
         
         // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        let scene = SCNScene()
         
         // Set the scene to the view
         sceneView.scene = scene
@@ -93,32 +93,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         isTouching = true
         
-        guard let touch = touches.first else { return }
-        let touchLocation: CGPoint = touch.location(in: sceneView)
-        let hits = self.sceneView.hitTest(touchLocation, options: nil)
+//        guard let touch = touches.first else { return }
+//        let touchLocation: CGPoint = touch.location(in: sceneView)
+//        let hits = self.sceneView.hitTest(touchLocation, options: nil)
         
-        
-        if let cameraNode = self.sceneView.pointOfView {
-            let adjustedPos = SCNVector3(cameraNode.position.x, cameraNode.position.y, cameraNode.position.z - 0.05)
-            addSphere(position: adjustedPos)
-            
-//            let width = sceneView.frame.size.width;
-//            let height = sceneView.frame.size.height;
-//
-//            guard let touch = touches.first else { return }
-//            let touchLocation: CGPoint = touch.location(in: sceneView)
-////            let hits = self.sceneView.hitTest(touchLocation, options: nil) else { return}
-//            let hits = sceneView.hitTest(touchLocation, types: [.existingPlaneUsingExtent, .featurePoint])
-//
-//            if !hits.isEmpty {
-//                let distance = hits.first!.distance
-//                let pos = sceneSpacePosition(inFrontOf: cameraNode, atDistance: Float(distance))
-//
-//                // Add the sphere
-//                addSphere(position: pos)
-//
-//            }
-        }
     }
     
     // MARK: Helper methods for adding content
@@ -142,7 +120,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     // Stops recording
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         print("Ended")
-        
+        isTouching = false
     }
     
     // MARK: - ARSCNViewDelegate
@@ -161,7 +139,26 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Add the content if touching the screen
         if isTouching {
-            
+            if let cameraNode = self.sceneView.pointOfView {
+                let adjustedPos = SCNVector3(cameraNode.position.x, cameraNode.position.y, cameraNode.position.z - 0.05)
+                addSphere(position: adjustedPos)
+                //            let width = sceneView.frame.size.width;
+                //            let height = sceneView.frame.size.height;
+                //
+                //            guard let touch = touches.first else { return }
+                //            let touchLocation: CGPoint = touch.location(in: sceneView)
+                ////            let hits = self.sceneView.hitTest(touchLocation, options: nil) else { return}
+                //            let hits = sceneView.hitTest(touchLocation, types: [.existingPlaneUsingExtent, .featurePoint])
+                //
+                //            if !hits.isEmpty {
+                //                let distance = hits.first!.distance
+                //                let pos = sceneSpacePosition(inFrontOf: cameraNode, atDistance: Float(distance))
+                //
+                //                // Add the sphere
+                //                addSphere(position: pos)
+                //
+                //            }
+            }
         }
     }
     
