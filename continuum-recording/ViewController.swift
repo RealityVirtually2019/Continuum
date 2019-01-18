@@ -10,6 +10,70 @@ import UIKit
 import SceneKit
 import ARKit
 
+// A moment can be a photo node, audio node, or
+// Initially just a plane
+
+// How will this work? record audio and assign an ID to the audio file (associated with each begin/end)
+// Then each moment frame gets tagged with the ID of the audio file and the moment in time it refers to
+class Moment: SCNNode {
+    
+    // TODO: Add constraints
+    
+    // Make width and height based on the screen proportions
+    init(width: CGFloat = 0.3, height: CGFloat = 0.15, content: Any, doubleSided: Bool, horizontal: Bool) {
+        
+        super.init()
+        
+        //1. Create The Plane Geometry With Our Width & Height Parameters
+        let plane = SCNPlane(width: width, height: height)
+        plane.cornerRadius = 0.1
+        self.geometry = plane
+        
+        //2. Create A New Material
+        let material = SCNMaterial()
+        
+        if let colour = content as? UIColor{
+            
+            //The Material Will Be A UIColor
+            material.diffuse.contents = colour
+            
+        } else if let image = content as? UIImage{
+            
+            //The Material Will Be A UIImage
+            material.diffuse.contents = image
+            
+        }else{
+            
+            //Set Our Material Colour To Cyan
+            material.diffuse.contents = UIColor.cyan
+            
+        }
+        
+        //3. Set The 1st Material Of The Plane
+        self.geometry?.firstMaterial = material
+        
+        //4. If We Want Our Material To Be Applied On Both Sides The Set The Property To True
+        if doubleSided{
+            material.isDoubleSided = true
+        }
+        
+        //5. By Default An SCNPlane Is Rendered Vertically So If We Need It Horizontal We Need To Rotate It
+        if horizontal{
+            self.transform = SCNMatrix4MakeRotation(-Float.pi / 2, 1, 0, 0)
+        }
+        
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+}
+
+class Plane: SCNNode {
+    
+}
+
 class Sphere: SCNNode {
     
     static let radius: CGFloat = 0.01
@@ -45,6 +109,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     // MARK: Data management
     // TODO: Move into singleton
     var spheres: [Sphere] = [Sphere]()
+    var moments: [Moment] = [Moment]()
     
     // MARK: State
     var isTouching = false
@@ -100,14 +165,24 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     }
     
     // MARK: Helper methods for adding content
-    func addSphere(position: SCNVector3) {
+    func addContent(position: SCNVector3) {
         print("adding sphere at point: \(position)")
-        let sphere: Sphere = Sphere(position: position)
-        self.sceneView.scene.rootNode.addChildNode(sphere)
+        
+        // Initially, add the sphere
+//        let sphere: Sphere = Sphere(position: position)
+//        self.sceneView.scene.rootNode.addChildNode(sphere)
+        
+        // Now add "moments"
+        //1. Create Our Plane Node
+        let plane = Moment(content: UIColor.white.withAlphaComponent(0.25), doubleSided: true, horizontal: false)
+        //2. Set It's Position 1.5m Away From The Camera
+        plane.position = position
+        self.sceneView.scene.rootNode.addChildNode(plane)
+        moments.append(plane)
         
         // if we keep an array of these babies, then calling
         // sphere.clear() on each will remove them from the scene
-        spheres.append(sphere)
+//        spheres.append(sphere)
     }
     
     func sceneSpacePosition(inFrontOf node: SCNNode, atDistance distance: Float) -> SCNVector3 {
@@ -140,8 +215,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         // Add the content if touching the screen
         if isTouching {
             if let cameraNode = self.sceneView.pointOfView {
+                // Adjusts for the distance
                 let adjustedPos = SCNVector3(cameraNode.position.x, cameraNode.position.y, cameraNode.position.z - 0.05)
-                addSphere(position: adjustedPos)
+                addContent(position: adjustedPos)
                 //            let width = sceneView.frame.size.width;
                 //            let height = sceneView.frame.size.height;
                 //
