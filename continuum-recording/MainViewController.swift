@@ -20,13 +20,14 @@ class Moment: SCNNode {
     // TODO: Add constraints
     
     // Make width and height based on the screen proportions
-    init(width: CGFloat = 0.3, height: CGFloat = 0.15, content: Any, doubleSided: Bool, horizontal: Bool) {
+    // Keep the same aspect ratio of the screen
+    init(width: CGFloat = 0.035, height: CGFloat = 0.02, content: Any, doubleSided: Bool, horizontal: Bool) {
         
         super.init()
         
         //1. Create The Plane Geometry With Our Width & Height Parameters
         let plane = SCNPlane(width: width, height: height)
-        plane.cornerRadius = 0.1
+        plane.cornerRadius = 0.01/2
         self.geometry = plane
         
         //2. Create A New Material
@@ -104,18 +105,23 @@ class Sphere: SCNNode {
     
 }
 
-class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
+class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     // MARK: Data management
     // TODO: Move into singleton
     var spheres: [Sphere] = [Sphere]()
+    
+    // Store moments
     var moments: [Moment] = [Moment]()
+    
+    // How to store the data?
     
     // MARK: State
     var isTouching = false
     
     // MARK: IBOutlets
     @IBOutlet var sceneView: ARSCNView!
+    @IBOutlet weak var previewView: UIImageView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -131,6 +137,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         let scene = SCNScene()
         
         // Set the scene to the view
+//        sceneView.preferredFramesPerSecond = 24
         sceneView.scene = scene
     }
     
@@ -142,6 +149,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
         // Run the view's session
         sceneView.session.run(configuration)
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -174,11 +182,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Now add "moments"
         //1. Create Our Plane Node
-        let plane = Moment(content: UIColor.white.withAlphaComponent(0.25), doubleSided: true, horizontal: false)
+        let moment = Moment(content: UIColor.white.withAlphaComponent(0.25), doubleSided: true, horizontal: false)
         //2. Set It's Position 1.5m Away From The Camera
-        plane.position = position
-        self.sceneView.scene.rootNode.addChildNode(plane)
-        moments.append(plane)
+        moment.position = position
+//        moment.geometry?.firstMaterial?.diffuse.contents = sceneView.session.currentFrame?.capturedImage
+        
+        // This causes AWFUL memory issues
+        moment.geometry?.firstMaterial?.diffuse.contents = sceneView.snapshot()
+
+        self.sceneView.scene.rootNode.addChildNode(moment)
+        moments.append(moment)
         
         // if we keep an array of these babies, then calling
         // sphere.clear() on each will remove them from the scene
