@@ -10,138 +10,50 @@ import UIKit
 import SceneKit
 import ARKit
 
-// A moment can be a photo node, audio node, or
-// Initially just a plane
-
-// How will this work? record audio and assign an ID to the audio file (associated with each begin/end)
-// Then each moment frame gets tagged with the ID of the audio file and the moment in time it refers to
-class Moment: SCNNode {
-    
-    // TODO: Add constraints
-    
-    // Make width and height based on the screen proportions
-    // Keep the same aspect ratio of the screen
-    init(width: CGFloat = 0.035, height: CGFloat = 0.02, content: Any, doubleSided: Bool, horizontal: Bool) {
-        
-        super.init()
-        
-        //1. Create The Plane Geometry With Our Width & Height Parameters
-        let plane = SCNPlane(width: width, height: height)
-        plane.cornerRadius = 0.01/2
-        self.geometry = plane
-        
-        //2. Create A New Material
-        let material = SCNMaterial()
-        
-        if let colour = content as? UIColor{
-            
-            //The Material Will Be A UIColor
-            material.diffuse.contents = colour
-            
-        } else if let image = content as? UIImage{
-            
-            //The Material Will Be A UIImage
-            material.diffuse.contents = image
-            
-        }else{
-            
-            //Set Our Material Colour To Cyan
-            material.diffuse.contents = UIColor.cyan
-            
-        }
-        
-        //3. Set The 1st Material Of The Plane
-        self.geometry?.firstMaterial = material
-        
-        //4. If We Want Our Material To Be Applied On Both Sides The Set The Property To True
-        if doubleSided{
-            material.isDoubleSided = true
-        }
-        
-        //5. By Default An SCNPlane Is Rendered Vertically So If We Need It Horizontal We Need To Rotate It
-        if horizontal{
-            self.transform = SCNMatrix4MakeRotation(-Float.pi / 2, 1, 0, 0)
-        }
-        
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
+extension CGRect {
+//    func / {
+//        return CGRect(x: self.x/, y: <#T##CGFloat#>, width: <#T##CGFloat#>, height: <#T##CGFloat#>)
+//    }
 }
-
-class Plane: SCNNode {
-    
-}
-
-class Sphere: SCNNode {
-    
-    static let radius: CGFloat = 0.01
-    
-    let sphereGeometry: SCNSphere
-    
-    // Required but unused
-    required init?(coder aDecoder: NSCoder) {
-        sphereGeometry = SCNSphere(radius: Sphere.radius)
-        super.init(coder: aDecoder)
-    }
-    
-    // The real action happens here
-    init(position: SCNVector3) {
-        self.sphereGeometry = SCNSphere(radius: Sphere.radius)
-        
-        super.init()
-        
-        let sphereNode = SCNNode(geometry: self.sphereGeometry)
-        sphereNode.position = position
-        
-        self.addChildNode(sphereNode)
-    }
-    
-    func clear() {
-        self.removeFromParentNode()
-    }
-    
-}
-
 class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     // MARK: Data management
-    // TODO: Move into singleton
-    var spheres: [Sphere] = [Sphere]()
-    
     // Keep the data flat, using dependency injection with the image and audio data
-    
     // image data
     // audio data
     // image, audio -> moments
     // image, audio -> preview
-    
-    //
     // Store moments
     var moments: [Moment] = [Moment]()
+    
+    // Store the image frames separately
+    var frames: [UIImage] = [UIImage]()
     var previousMoment: Moment! {
         didSet {
             // Checking if the change is happening from frame to frame
             if previousMoment != nil && oldValue != nil {
                 if previousMoment.name != oldValue.name {
-                    print("changing")
                     feedback.prepare()
                     feedback.impactOccurred()
                 }
             }
         }
     }
-    var images: [UIImage] = [UIImage]()
-    
     let feedback = UIImpactFeedbackGenerator(style: .light)
 
     
     // How to store the data?
     
     // MARK: State
+    let recorder = Recorder()
+    
     var isTouching = false
+    var audioRecorder: AVAudioRecorder! = AVAudioRecorder()
+    var audioPlayer : AVAudioPlayer! = AVAudioPlayer()
+    var meterTimer:Timer!
+    var isAudioRecordingGranted: Bool!
+    var isRecording = false
+    var isPlaying = false
     
     // MARK: IBOutlets
     @IBOutlet var sceneView: ARSCNView!
@@ -149,6 +61,8 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         didSet {
             previewView.layer.cornerRadius = 5
             previewView.clipsToBounds = true
+            
+//            let mask = UIView.init(frame: UIScreen.main.bounds/2)
             
 //            // Create a mutable path and add a rectangle that will be h
 //            let mutablePath = CGMutablePath()
@@ -167,6 +81,12 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Audio setup
+//        audioPlayer.delegate = self
+//        audioRecorder.delegate = self
+        
+        checkRecordPermission()
         
         // Set the view's delegate
         sceneView.delegate = self
@@ -207,23 +127,153 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         sceneView.session.pause()
     }
     
+    // MARK: Audio handling
+    func checkRecordPermission() {
+        switch AVAudioSession.sharedInstance().recordPermission {
+        case AVAudioSession.RecordPermission.granted:
+            isAudioRecordingGranted = true
+            break
+        case AVAudioSession.RecordPermission.denied:
+            isAudioRecordingGranted = false
+            break
+        case AVAudioSession.RecordPermission.undetermined:
+            AVAudioSession.sharedInstance().requestRecordPermission({ (allowed) in
+                if allowed {
+                    self.isAudioRecordingGranted = true
+                } else {
+                    self.isAudioRecordingGranted = false
+                }
+            })
+            break
+        default:
+            break
+        }
+    }
+    
+    // Generating audio file paths
+    func getDocumentsDirectory() -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let documentsDirectory = paths[0]
+        return documentsDirectory
+    }
+    
+    func getFileUrl(fileID: String) -> URL {
+        let filename = "\(fileID).m4a"
+        let filePath = getDocumentsDirectory().appendingPathComponent(filename)
+        return filePath
+    }
+    
+    func setupRecorder(fileID: String)
+    {
+        if isAudioRecordingGranted
+        {
+            let session = AVAudioSession.sharedInstance()
+            do
+            {
+                try session.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
+                try session.setActive(true)
+                let settings = [
+                    AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                    AVSampleRateKey: 44100,
+                    AVNumberOfChannelsKey: 2,
+                    AVEncoderAudioQualityKey:AVAudioQuality.high.rawValue
+                ]
+                audioRecorder = try AVAudioRecorder(url: getFileUrl(fileID: fileID), settings: settings)
+                audioRecorder.delegate = self
+                audioRecorder.isMeteringEnabled = true
+                audioRecorder.prepareToRecord()
+            }
+            catch let error {
+                displayAlert(messageTitle: "Error", description: error.localizedDescription, actionTitle: "OK")
+            }
+        }
+        else {
+            displayAlert(messageTitle: "Error", description: "Don't have access to use your microphone.", actionTitle: "OK")
+        }
+    }
+    
+    func displayAlert(messageTitle : String , description : String ,actionTitle : String) {
+        let ac = UIAlertController(title: messageTitle, message: description, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: actionTitle, style: .default)
+        {
+            (result : UIAlertAction) -> Void in
+            _ = self.navigationController?.popViewController(animated: true)
+        })
+        present(ac, animated: true)
+    }
+    
+    // Recording
+    func startRecording() {
+        if isRecording {
+            finishRecording(success: true)
+            isRecording = false
+        } else {
+            audioRecorder.record()
+            meterTimer = Timer.scheduledTimer(timeInterval: 0.1, target:self, selector:#selector(self.updateAudioMeter(timer:)), userInfo:nil, repeats:true)
+            isRecording = true
+        }
+    }
+    
+    @objc func updateAudioMeter(timer: Timer) {
+        if audioRecorder.isRecording {
+            audioRecorder.updateMeters()
+        }
+    }
+
+    
+    func finishRecording(success: Bool) {
+        if success {
+            audioRecorder.stop()
+            audioRecorder = nil
+            meterTimer.invalidate()
+            print("Successfully recorded!")
+        } else {
+            displayAlert(messageTitle: "Error", description: "Recording failed.", actionTitle: "OK")
+        }
+    }
+    
+    // Playback
+    func prepareToPlay(fileID: String) {
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: getFileUrl(fileID: fileID))
+            audioPlayer.delegate = self
+            audioPlayer.prepareToPlay()
+        } catch{
+            print("Error")
+        }
+    }
+    
+    func playRecording(fileID: String) {
+        if isPlaying  {
+            audioPlayer.stop()
+            isPlaying = false
+        } else {
+            if FileManager.default.fileExists(atPath: getFileUrl(fileID: fileID).path) {
+                prepareToPlay(fileID: fileID)
+                audioPlayer.play()
+                isPlaying = true
+            } else {
+                displayAlert(messageTitle: "Error", description: "Audio file is missing", actionTitle: "Ok?")
+            }
+        }
+    }
+    
+    
     // MARK: Main interaction handlers
     // Began is used to ADD content once the settings are adjusted
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         print("Began")
-        
         isTouching = true
-        
-//        guard let touch = touches.first else { return }
-//        let touchLocation: CGPoint = touch.location(in: sceneView)
-//        let hits = self.sceneView.hitTest(touchLocation, options: nil)
-        
+    }
+    
+    // Stops recording
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        print("Ended")
+        isTouching = false
     }
     
     // MARK: Helper methods for adding content
     func addContent(position: SCNVector3) {
-        print("adding sphere at point: \(position)")
-        
         // Initially, add the sphere
 //        let sphere: Sphere = Sphere(position: position)
 //        self.sceneView.scene.rootNode.addChildNode(sphere)
@@ -233,27 +283,29 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         guard let frame = sceneView.session.currentFrame else { return }
         
 //        var currentImage = UIImage(pixelBuffer: frame.capturedImage)
+//        print(currentImage)
+        
         let currentImage = sceneView.snapshot()
         
         // Store the images separately
-        images.append(currentImage)
+        frames.append(currentImage)
         
-        let moment = Moment(content: currentImage, doubleSided: false, horizontal: false)
+        // It's storing them inside the
+        
+        let moment = Moment(content: UIColor.white.withAlphaComponent(0.25), doubleSided: false, horizontal: false)
         moment.position = position
         
+        print("Moment count: \(moments.count)")
+        
         // ID, figute this out
+        // Tag the moment
+        // Add an id to it
+        //
         moment.name = "\(moments.count)"
         moment.simdTransform = frame.camera.transform
         
-        // This causes AWFUL memory issues
-//        moment.geometry?.firstMaterial?.diffuse.contents = sceneView.snapshot()
-
         self.sceneView.scene.rootNode.addChildNode(moment)
         moments.append(moment)
-        
-        // if we keep an array of these babies, then calling
-        // sphere.clear() on each will remove them from the scene
-//        spheres.append(sphere)
     }
     
     func sceneSpacePosition(inFrontOf node: SCNNode, atDistance distance: Float) -> SCNVector3 {
@@ -261,12 +313,6 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         let scenePosition = node.convertPosition(localPosition, to: nil)
         // to: nil is automatically scene space
         return scenePosition
-    }
-    
-    // Stops recording
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        print("Ended")
-        isTouching = false
     }
     
     // MARK: - ARSCNViewDelegate
@@ -286,6 +332,19 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         return GLKVector3Distance(node1Pos, node2Pos)
     }
     
+    // Use this to validate adding new content when pressing down
+    func canAddContent(position: SCNVector3) -> Bool {
+        if moments.count < 1 {
+            return true
+        }
+        for m  in moments {
+            if distance(m.position, position) <= 0.05 {
+                return false
+            }
+        }
+        return true
+    }
+    
     // EVERY FRAME
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         
@@ -296,11 +355,14 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 let adjustedPos = SCNVector3(cameraNode.position.x, cameraNode.position.y, cameraNode.position.z - 0.05)
                 
                 if isTouching {
-                    addContent(position: adjustedPos)
+                    if canAddContent(position: adjustedPos) {
+                        addContent(position: adjustedPos)
+                    }
                 } else {
                     // Need to check if camera position is touching one of the moments nodes
                     // distance between camera and position
-                    guard let touchedMoment = moments.first(where: { distance($0.position, adjustedPos) < 0.025 }) else {
+                    // Need to make this less sensitive
+                    guard let touchedMoment = moments.first(where: { distance($0.position, cameraNode.position) < 0.01 }) else {
                         self.previewView.image = nil
                         return
                     }
@@ -317,7 +379,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     UIView.transition(with: self.previewView,
                                       duration: 0.5,
                                       options: .transitionCrossDissolve,
-                                      animations: { self.previewView.image = self.images[imgIdx] },
+                                      animations: { self.previewView.image = self.frames[imgIdx] },
                                       completion: nil)
                     
 //                      self.previewView.image = images[imgIdx]
@@ -363,6 +425,16 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     func sessionInterruptionEnded(_ session: ARSession) {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
+        
+    }
+}
+
+extension MainViewController: AVAudioRecorderDelegate, AVAudioPlayerDelegate {
+    func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+        finishRecording(success: false)
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         
     }
 }

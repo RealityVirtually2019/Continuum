@@ -16,8 +16,9 @@
 		360FD3F221F25F500086232C /* continuum_recordingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360FD3F121F25F500086232C /* continuum_recordingTests.swift */; };
 		360FD3FD21F25F500086232C /* continuum_recordingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360FD3FC21F25F500086232C /* continuum_recordingUITests.swift */; };
 		360FD40B21F279290086232C /* UIImage+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360FD40A21F279290086232C /* UIImage+Extensions.swift */; };
-		360FD40D21F2A4060086232C /* SCNVector3+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360FD40C21F2A4060086232C /* SCNVector3+Extensions.swift */; };
 		360FD40F21F2AB2B0086232C /* Moment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360FD40E21F2AB2B0086232C /* Moment.swift */; };
+		360FD41121F2BFB80086232C /* Recorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360FD41021F2BFB80086232C /* Recorder.swift */; };
+		360FD41321F2C7240086232C /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360FD41221F2C7240086232C /* DataManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,8 +54,9 @@
 		360FD3FC21F25F500086232C /* continuum_recordingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = continuum_recordingUITests.swift; sourceTree = "<group>"; };
 		360FD3FE21F25F500086232C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		360FD40A21F279290086232C /* UIImage+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Extensions.swift"; sourceTree = "<group>"; };
-		360FD40C21F2A4060086232C /* SCNVector3+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SCNVector3+Extensions.swift"; sourceTree = "<group>"; };
 		360FD40E21F2AB2B0086232C /* Moment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Moment.swift; sourceTree = "<group>"; };
+		360FD41021F2BFB80086232C /* Recorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recorder.swift; sourceTree = "<group>"; };
+		360FD41221F2C7240086232C /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,8 +110,9 @@
 				360FD3DA21F25F4F0086232C /* AppDelegate.swift */,
 				360FD3DC21F25F4F0086232C /* art.scnassets */,
 				360FD3DE21F25F4F0086232C /* MainViewController.swift */,
+				360FD41221F2C7240086232C /* DataManager.swift */,
 				360FD40E21F2AB2B0086232C /* Moment.swift */,
-				360FD40C21F2A4060086232C /* SCNVector3+Extensions.swift */,
+				360FD41021F2BFB80086232C /* Recorder.swift */,
 				360FD40A21F279290086232C /* UIImage+Extensions.swift */,
 				360FD3E021F25F4F0086232C /* Main.storyboard */,
 				360FD3E321F25F500086232C /* Assets.xcassets */,
@@ -269,11 +272,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				360FD41121F2BFB80086232C /* Recorder.swift in Sources */,
+				360FD41321F2C7240086232C /* DataManager.swift in Sources */,
 				360FD40B21F279290086232C /* UIImage+Extensions.swift in Sources */,
 				360FD3DF21F25F4F0086232C /* MainViewController.swift in Sources */,
 				360FD3DB21F25F4F0086232C /* AppDelegate.swift in Sources */,
 				360FD40F21F2AB2B0086232C /* Moment.swift in Sources */,
-				360FD40D21F2A4060086232C /* SCNVector3+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

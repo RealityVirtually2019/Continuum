@@ -1,5 +1,5 @@
 //
-//  SCNVector3+Extensions.swift
+//  DataManager.swift
 //  continuum-recording
 //
 //  Created by Tyler Angert on 1/18/19.
@@ -7,3 +7,12 @@
 //
 
 import Foundation
+
+class DataManager {
+    static let shared = DataManager()
+    
+    init(){
+        
+    }
+    
+}
