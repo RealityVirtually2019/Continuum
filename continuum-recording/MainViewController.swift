@@ -121,7 +121,22 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     //
     // Store moments
     var moments: [Moment] = [Moment]()
+    var previousMoment: Moment! {
+        didSet {
+            // Checking if the change is happening from frame to frame
+            if previousMoment != nil && oldValue != nil {
+                if previousMoment.name != oldValue.name {
+                    print("changing")
+                    feedback.prepare()
+                    feedback.impactOccurred()
+                }
+            }
+        }
+    }
     var images: [UIImage] = [UIImage]()
+    
+    let feedback = UIImpactFeedbackGenerator(style: .light)
+
     
     // How to store the data?
     
@@ -130,7 +145,12 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     // MARK: IBOutlets
     @IBOutlet var sceneView: ARSCNView!
-    @IBOutlet weak var previewView: UIImageView!
+    @IBOutlet weak var previewView: UIImageView! {
+        didSet {
+            previewView.layer.cornerRadius = 2.5
+            previewView.clipsToBounds = true
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -264,17 +284,28 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     // Need to check if camera position is touching one of the moments nodes
                     // distance between camera and position
                     guard let touchedMoment = moments.first(where: { distance($0.position, adjustedPos) < 0.025 }) else {
-                        
                         self.previewView.image = nil
                         return
                     }
-                    if touchedMoment.isHidden {
-                        touchedMoment.isHidden = false
+                    
+                    // Protects against first case
+                    if previousMoment != nil {
+                        previousMoment.isHidden = false
                     }
                     
+                    previousMoment = touchedMoment
+                    
                     let imgIdx = Int(touchedMoment.name!)!
-                    self.previewView.image = images[imgIdx]
-                    touchedMoment.isHidden = true
+//
+                    UIView.transition(with: self.previewView,
+                                      duration: 0.5,
+                                      options: .transitionCrossDissolve,
+                                      animations: { self.previewView.image = self.images[imgIdx] },
+                                      completion: nil)
+                    
+//                      self.previewView.image = images[imgIdx]
+//                    touchedMoment.isHidden = true
+                    previousMoment.isHidden = true
 
                 }
             
