@@ -21,13 +21,13 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     // A path is made up arrays of moments!
     // Stored as a dictionary with the path ID?
-    var paths: [String: [Moment]] = [String: [Moment]]()
+    var paths: [[Moment]] = [[Moment]]()
     // How to store by ID?
     var frames: [UIImage] = [UIImage]()
     var audioFiles: [String] = [String]()
     
-    // Store moments
-    var moments: [Moment] = [Moment]()
+    // Store the currently recorded moments
+    var currentMoments: [Moment] = [Moment]()
     
     var previousMoment: Moment! {
         didSet {
@@ -132,14 +132,19 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // Began is used to ADD content once the settings are adjusted
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = true
-        recorder.changeFile(withFileName: "\(moments.count)")
+        recorder.changeFile(withFileName: "\(currentMoments.count)")
         recorder.doRecord()
     }
+    
+    // Access a frame by accessing path then frame index
+    // So paths[0][5] is the 5th frame of the 0th path
     
     // Stops recording
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = false
         recorder.doStopRecording()
+        // Store the current moments
+        paths.append(currentMoments)
     }
     
     // MARK: Helper methods for adding content
@@ -159,12 +164,20 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         // It's storing them inside the
         let moment = Moment(content: UIColor.white.withAlphaComponent(0.5), doubleSided: false, horizontal: false)
         moment.position = position
-        moment.id = moments.count
-        moment.name = "\(moments.count)"
+        
+        // Do better with IDs, maybe make a dictionary with UUIDs?
+        moment.id = currentMoments.count
+        moment.pathID = paths.count
+        
+        moment.name = "\(currentMoments.count)"
+        moment.timestamp = frame.timestamp
+        
+        print(moment.timestamp)
+        
         moment.simdTransform = frame.camera.transform
         
         self.sceneView.scene.rootNode.addChildNode(moment)
-        moments.append(moment)
+        currentMoments.append(moment)
     }
     
     func sceneSpacePosition(inFrontOf node: SCNNode, atDistance distance: Float) -> SCNVector3 {
@@ -193,10 +206,10 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     // Use this to validate adding new content when pressing down
     func canAddContent(position: SCNVector3) -> Bool {
-        if moments.count < 1 {
+        if currentMoments.count < 1 {
             return true
         }
-        for m  in moments {
+        for m  in currentMoments {
             if distance(m.position, position) <= 0.05 {
                 return false
             }
@@ -221,17 +234,22 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     // Need to check if camera position is touching one of the moments nodes
                     // distance between camera and position
                     // Need to make this less sensitive
-                    guard let touchedMoment = moments.first(where: { distance($0.position, cameraNode.position) < 0.01 }) else {
+                    guard let touchedMoment = currentMoments.first(where: { distance($0.position, cameraNode.position) < 0.01 }) else {
                         self.previewView.image = nil
                         self.isPlaying = false
                         return
                     }
                     
-                    print("TOUCHED: \(touchedMoment.id)")
-                    
-                    if !isPlaying {
-                        recorder.doPlay(fileID: String(touchedMoment.id))
-                    }
+                    // get ending
+                    // lol u just discovered how to normalize from scratch
+                    guard let endTime = paths[touchedMoment.pathID].last?.timestamp else { return }
+                    guard let startTime = paths[touchedMoment.pathID].first?.timestamp else { return }
+                    let duration = endTime - startTime
+                    let currentTime = (touchedMoment.timestamp - startTime)/duration
+                    recorder.doPlay(fileID: String(touchedMoment.id), time: currentTime)
+
+//                    if !isPlaying {
+//                    }
                     
                     isPlaying = true
                     

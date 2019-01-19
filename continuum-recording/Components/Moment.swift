@@ -17,6 +17,7 @@ import SceneKit
 
 class Moment: SCNNode {
     
+    var pathID: Int!
     var id: Int!
     var image: UIImage!
     var timestamp: TimeInterval!

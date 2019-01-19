@@ -235,9 +235,19 @@ class AGAudioRecorder: NSObject {
         }
     }
     
-    func doPlay(fileID: String) {
+    // If you want to play at a specific time...
+    // Scrub to the proportion of the audio file -> SET CURRENT TIME
+    // Play from there
+    // Perhaps play with duration?
+    // Amount of time from current to next?
+    
+    func doPlay(fileID: String, time: TimeInterval) {
         if audioPlayer == nil {
-            self.preparePlay(fileID: fileID)
+            if FileManager.default.fileExists(atPath: fileURL(fileID: fileID).path) {
+                self.preparePlay(fileID: fileID)
+            } else {
+                return
+            }
         }
         
         if audioRecorder != nil, audioRecorder.isRecording {
@@ -247,9 +257,11 @@ class AGAudioRecorder: NSObject {
         if audioPlayer.isPlaying {
             doPause()
         }
+            
         else{
             if FileManager.default.fileExists(atPath: fileURL(fileID: fileID).path) {
                 self.preparePlay(fileID: fileID)
+                audioPlayer.currentTime = time
                 audioPlayer.play()
                 recorderState = .Play
             }
