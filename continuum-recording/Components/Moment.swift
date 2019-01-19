@@ -14,15 +14,12 @@ import SceneKit
 
 // How will this work? record audio and assign an ID to the audio file (associated with each begin/end)
 // Then each moment frame gets tagged with the ID of the audio file and the moment in time it refers to
-struct MomentModel {
-    var id: Int!
-    var image: UIImage!
-    var timestamp: TimeInterval!
-}
 
 class Moment: SCNNode {
     
-    static var model: MomentModel!
+    var id: Int!
+    var image: UIImage!
+    var timestamp: TimeInterval!
     
     // Make width and height based on the screen proportions
     // Keep the same aspect ratio of the screen

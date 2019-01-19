@@ -13,9 +13,9 @@ enum AGAudioRecorderState {
     case Pause
     case Play
     case Finish
-    case Failed(String)
     case Recording
     case Ready
+    case Failed(String)
     case error(Error)
 }
 
@@ -45,13 +45,12 @@ class AGAudioRecorder: NSObject {
     
     init(withFileName filename: String) {
         super.init()
-        
         self.recorderState = .Ready
         self.filename = filename
-        self.check_record_permission()
+        self.checkRecordPermission()
     }
     
-    private func check_record_permission() {
+    private func checkRecordPermission() {
         
         switch AVAudioSession.sharedInstance().recordPermission {
         case .granted:
@@ -162,7 +161,6 @@ class AGAudioRecorder: NSObject {
     }
     
     func doRecord() {
-        
         if audioRecorder == nil {
             setupRecorder()
         }
