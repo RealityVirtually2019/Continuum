@@ -27,14 +27,14 @@
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="120" id="DM0-5n-wvA"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" constant="73" id="3VL-tR-6BG"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerX" secondItem="BrB-h1-WRS" secondAttribute="centerX" id="CSI-zr-hLj"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="120" id="Lpi-YD-hAo"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" id="VpT-BR-CcM"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerX" secondItem="BrB-h1-WRS" secondAttribute="centerX" id="j7K-dQ-sAh"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerY" secondItem="BrB-h1-WRS" secondAttribute="centerY" id="prS-wv-kzY"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerY" secondItem="BrB-h1-WRS" secondAttribute="centerY" id="fEh-cP-5Ym"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" constant="73" id="tlw-ni-zG0"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                     </view>

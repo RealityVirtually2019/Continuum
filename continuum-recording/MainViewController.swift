@@ -111,8 +111,17 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // TODO: Move into singleton
     var spheres: [Sphere] = [Sphere]()
     
+    // Keep the data flat, using dependency injection with the image and audio data
+    
+    // image data
+    // audio data
+    // image, audio -> moments
+    // image, audio -> preview
+    
+    //
     // Store moments
     var moments: [Moment] = [Moment]()
+    var images: [UIImage] = [UIImage]()
     
     // How to store the data?
     
@@ -136,8 +145,11 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         // Create a new scene
         let scene = SCNScene()
         
-        // Set the scene to the view
+        // Rendering speed optimization
 //        sceneView.preferredFramesPerSecond = 24
+//        sceneView.rendersContinuously = false
+        
+        // Set the scene to the view
         sceneView.scene = scene
     }
     
@@ -182,13 +194,22 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         
         // Now add "moments"
         //1. Create Our Plane Node
-        let moment = Moment(content: UIColor.white.withAlphaComponent(0.25), doubleSided: true, horizontal: false)
-        //2. Set It's Position 1.5m Away From The Camera
+        guard let frame = sceneView.session.currentFrame else { return }
+        
+//        var currentImage = UIImage(pixelBuffer: frame.capturedImage)
+        let currentImage = sceneView.snapshot()
+        
+        // Store the images separately
+        images.append(currentImage)
+        
+        let moment = Moment(content: currentImage, doubleSided: false, horizontal: false)
         moment.position = position
-//        moment.geometry?.firstMaterial?.diffuse.contents = sceneView.session.currentFrame?.capturedImage
+        
+        // ID, figute this out
+        moment.name = "\(moments.count)"
         
         // This causes AWFUL memory issues
-        moment.geometry?.firstMaterial?.diffuse.contents = sceneView.snapshot()
+//        moment.geometry?.firstMaterial?.diffuse.contents = sceneView.snapshot()
 
         self.sceneView.scene.rootNode.addChildNode(moment)
         moments.append(moment)
@@ -221,16 +242,45 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         return node
     }
 */
+    
+    func distance(_ vec1: SCNVector3, _ vec2: SCNVector3) ->  Float {
+        let node1Pos = SCNVector3ToGLKVector3(vec1)
+        let node2Pos = SCNVector3ToGLKVector3(vec2)
+        return GLKVector3Distance(node1Pos, node2Pos)
+    }
+    
     // EVERY FRAME
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        print("frame")
         
         // Add the content if touching the screen
-        if isTouching {
             if let cameraNode = self.sceneView.pointOfView {
+                
                 // Adjusts for the distance
                 let adjustedPos = SCNVector3(cameraNode.position.x, cameraNode.position.y, cameraNode.position.z - 0.05)
-                addContent(position: adjustedPos)
+                
+                if isTouching {
+                    addContent(position: adjustedPos)
+                } else {
+                    // Need to check if camera position is touching one of the moments nodes
+                    // distance between camera and position
+                    guard let touchedMoment = moments.first(where: { distance($0.position, adjustedPos) < 0.025 }) else {
+                        
+                        self.previewView.image = nil
+                        return
+                    }
+                    if touchedMoment.isHidden {
+                        touchedMoment.isHidden = false
+                    }
+                    
+                    let imgIdx = Int(touchedMoment.name!)!
+                    self.previewView.image = images[imgIdx]
+                    touchedMoment.isHidden = true
+
+                }
+            
+//                if !hits.isEmpty {
+//                    let detectedFrame = hits.
+//                }
                 //            let width = sceneView.frame.size.width;
                 //            let height = sceneView.frame.size.height;
                 //
@@ -248,7 +298,6 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 //
                 //            }
             }
-        }
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
