@@ -62,6 +62,10 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     var isRecording = false
     var isPlaying = false
     
+    // AG class
+    var state: AGAudioRecorderState = .Ready
+    var agRecorder: AGAudioRecorder = AGAudioRecorder(withFileName: "TempFile")
+    
     
     // MARK: IBOutlets
     @IBOutlet weak var recordButton: UIButton!
@@ -97,7 +101,6 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         // Audio setup
 //        audioPlayer.delegate = self
 //        audioRecorder.delegate = self
-        
 //        checkRecordPermission()
         
         recordingSession = AVAudioSession.sharedInstance()
@@ -222,33 +225,35 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     }
     
     @IBAction func recordTapped(_ sender: Any) {
-        if audioRecorder == nil {
-            startRecording()
-        } else {
-            finishRecording(success: true)
-        }
+        agRecorder.doRecord()
+//        if audioRecorder == nil {
+//            startRecording()
+//        } else {
+//            finishRecording(success: true)
+//        }
     }
     @IBAction func playTapped(_ sender: Any) {
         
-        guard let url = Bundle.main.url(forResource: "recording", withExtension: "m4a") else { return }
-        
-        do {
-            print(url)
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
-            
-            /* The following line is required for the player to work on iOS 11. Change the file type accordingly*/
-            audioPlayer = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileType.mp3.rawValue)
-            
-            /* iOS 10 and earlier require the following line:
-             player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileTypeMPEGLayer3) */
-            
-            guard let player = audioPlayer else { return }
-            player.play()
-            
-        } catch let error {
-            print(error.localizedDescription)
-        }
+        agRecorder.doPlay()
+//        guard let url = Bundle.main.url(forResource: "recording", withExtension: "m4a") else { return }
+//
+//        do {
+//            print(url)
+//            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+//            try AVAudioSession.sharedInstance().setActive(true)
+//
+//            /* The following line is required for the player to work on iOS 11. Change the file type accordingly*/
+//            audioPlayer = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileType.mp3.rawValue)
+//
+//            /* iOS 10 and earlier require the following line:
+//             player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileTypeMPEGLayer3) */
+//
+//            guard let player = audioPlayer else { return }
+//            player.play()
+//
+//        } catch let error {
+//            print(error.localizedDescription)
+//        }
     }
     
     //    // Generating audio file paths
@@ -463,51 +468,23 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     // Need to check if camera position is touching one of the moments nodes
                     // distance between camera and position
                     // Need to make this less sensitive
+                    
                     guard let touchedMoment = moments.first(where: { distance($0.position, cameraNode.position) < 0.01 }) else {
                         self.previewView.image = nil
                         return
                     }
-
-                    // Protects against first case
-                    if previousMoment != nil {
-                        previousMoment.isHidden = false
-                    }
-
+                    
                     previousMoment = touchedMoment
-
                     let imgIdx = Int(touchedMoment.name!)!
-//
+                    
                     UIView.transition(with: self.previewView,
                                       duration: 0.5,
                                       options: .transitionCrossDissolve,
                                       animations: { self.previewView.image = self.frames[imgIdx] },
                                       completion: nil)
 
-//                      self.previewView.image = images[imgIdx]
-//                    touchedMoment.isHidden = true
-                    previousMoment.isHidden = true
 
                 }
-
-//                if !hits.isEmpty {
-//                    let detectedFrame = hits.
-//                }
-                //            let width = sceneView.frame.size.width;
-                //            let height = sceneView.frame.size.height;
-                //
-                //            guard let touch = touches.first else { return }
-                //            let touchLocation: CGPoint = touch.location(in: sceneView)
-                ////            let hits = self.sceneView.hitTest(touchLocation, options: nil) else { return}
-                //            let hits = sceneView.hitTest(touchLocation, types: [.existingPlaneUsingExtent, .featurePoint])
-                //
-                //            if !hits.isEmpty {
-                //                let distance = hits.first!.distance
-                //                let pos = sceneSpacePosition(inFrontOf: cameraNode, atDistance: Float(distance))
-                //
-                //                // Add the sphere
-                //                addSphere(position: pos)
-                //
-                //            }
             }
     }
     
@@ -543,5 +520,36 @@ extension MainViewController: AVAudioRecorderDelegate, AVAudioPlayerDelegate {
     
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         
+    }
+}
+
+
+extension MainViewController: AGAudioRecorderDelegate {
+    func agAudioRecorder(_ recorder: AGAudioRecorder, withStates state: AGAudioRecorderState) {
+        switch state {
+        case .error(let e): debugPrint(e)
+        case .Failed(let s): debugPrint(s)
+            
+        case .Finish:
+            recordButton.setTitle("Recode", for: .normal)
+            
+        case .Recording:
+            recordButton.setTitle("Recoding Finished", for: .normal)
+            
+        case .Pause:
+            playButton.setTitle("Pause", for: .normal)
+            
+        case .Play:
+            playButton.setTitle("Play", for: .normal)
+            
+        case .Ready:
+            recordButton.setTitle("Recode", for: .normal)
+            playButton.setTitle("Play", for: .normal)
+        }
+        debugPrint(state)
+    }
+    
+    func agAudioRecorder(_ recorder: AGAudioRecorder, currentTime timeInterval: TimeInterval, formattedString: String) {
+        debugPrint(formattedString)
     }
 }
