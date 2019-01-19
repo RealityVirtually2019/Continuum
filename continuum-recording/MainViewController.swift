@@ -15,6 +15,7 @@ extension CGRect {
 //        return CGRect(x: self.x/, y: <#T##CGFloat#>, width: <#T##CGFloat#>, height: <#T##CGFloat#>)
 //    }
 }
+
 class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     // MARK: Data management
@@ -28,6 +29,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     // Store the image frames separately
     var frames: [UIImage] = [UIImage]()
+    
     var previousMoment: Moment! {
         didSet {
             // Checking if the change is happening from frame to frame
@@ -39,6 +41,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             }
         }
     }
+    
     let feedback = UIImpactFeedbackGenerator(style: .light)
 
     
@@ -48,33 +51,42 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     let recorder = Recorder()
     
     var isTouching = false
-    var audioRecorder: AVAudioRecorder! = AVAudioRecorder()
-    var audioPlayer : AVAudioPlayer! = AVAudioPlayer()
+    
+    // MARK: Audio
+    var audioRecorder: AVAudioRecorder!
+    var recordingSession: AVAudioSession!
+    var audioPlayer : AVAudioPlayer!
+    
     var meterTimer:Timer!
     var isAudioRecordingGranted: Bool!
     var isRecording = false
     var isPlaying = false
     
+    
     // MARK: IBOutlets
+    @IBOutlet weak var recordButton: UIButton!
+    @IBOutlet weak var playButton: UIButton!
+    
     @IBOutlet var sceneView: ARSCNView!
     @IBOutlet weak var previewView: UIImageView! {
         didSet {
-            previewView.layer.cornerRadius = 5
-            previewView.clipsToBounds = true
             
-//            let mask = UIView.init(frame: UIScreen.main.bounds/2)
+            let maskLayer = CAShapeLayer()
+            let scaleFactor: CGFloat = 1.5
             
-//            // Create a mutable path and add a rectangle that will be h
-//            let mutablePath = CGMutablePath()
-//            mutablePath.addRect(previewView.bounds)
-//            mutablePath.addRect(previewMask.bounds)
-//
-//            // Create a shape layer and cut out the intersection
-//            let mask = CAShapeLayer()
-//            mask.path = mutablePath
-//            mask.fillRule = CAShapeLayerFillRule.evenOdd
-//
-//            previewView.layer.mask = mask
+            let width = UIScreen.main.bounds.width/scaleFactor
+            let height = UIScreen.main.bounds.height/scaleFactor
+            
+            let widthOffset = UIScreen.main.bounds.width - width
+            let heightOffset = UIScreen.main.bounds.height - height
+            
+            let xOffset = widthOffset/3
+            let yOffset = heightOffset/3
+            
+            let maskRect = CGRect(x: xOffset, y: yOffset, width: width, height: height)
+            let path = CGPath(roundedRect: maskRect, cornerWidth: 5, cornerHeight: 5, transform: nil)
+            maskLayer.path = path
+            previewView.layer.mask = maskLayer
         }
     }
     @IBOutlet weak var previewMask: UIImageView!
@@ -86,7 +98,27 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
 //        audioPlayer.delegate = self
 //        audioRecorder.delegate = self
         
-        checkRecordPermission()
+//        checkRecordPermission()
+        
+        recordingSession = AVAudioSession.sharedInstance()
+        
+        do {
+            try recordingSession.setCategory(.playAndRecord, mode: .default)
+            try recordingSession.setActive(true)
+            recordingSession.requestRecordPermission() { [unowned self] allowed in
+                DispatchQueue.main.async {
+                    if allowed {
+                        self.isAudioRecordingGranted = true
+                    } else {
+                        // failed to record!
+                        self.isAudioRecordingGranted = false
+                    }
+                }
+            }
+        } catch {
+            // failed to record!
+        }
+        
         
         // Set the view's delegate
         sceneView.delegate = self
@@ -150,113 +182,182 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         }
     }
     
-    // Generating audio file paths
+    func startRecording() {
+        let audioFilename = getDocumentsDirectory().appendingPathComponent("recording.m4a")
+        
+        let settings = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 12000,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+        
+        do {
+            audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
+            audioRecorder.delegate = self
+            audioRecorder.record()
+            
+            recordButton.setTitle("Tap to Stop", for: .normal)
+        } catch {
+            finishRecording(success: false)
+        }
+    }
+    
+    
     func getDocumentsDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        let documentsDirectory = paths[0]
-        return documentsDirectory
+        return paths[0]
     }
-    
-    func getFileUrl(fileID: String) -> URL {
-        let filename = "\(fileID).m4a"
-        let filePath = getDocumentsDirectory().appendingPathComponent(filename)
-        return filePath
-    }
-    
-    func setupRecorder(fileID: String)
-    {
-        if isAudioRecordingGranted
-        {
-            let session = AVAudioSession.sharedInstance()
-            do
-            {
-                try session.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
-                try session.setActive(true)
-                let settings = [
-                    AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-                    AVSampleRateKey: 44100,
-                    AVNumberOfChannelsKey: 2,
-                    AVEncoderAudioQualityKey:AVAudioQuality.high.rawValue
-                ]
-                audioRecorder = try AVAudioRecorder(url: getFileUrl(fileID: fileID), settings: settings)
-                audioRecorder.delegate = self
-                audioRecorder.isMeteringEnabled = true
-                audioRecorder.prepareToRecord()
-            }
-            catch let error {
-                displayAlert(messageTitle: "Error", description: error.localizedDescription, actionTitle: "OK")
-            }
-        }
-        else {
-            displayAlert(messageTitle: "Error", description: "Don't have access to use your microphone.", actionTitle: "OK")
-        }
-    }
-    
-    func displayAlert(messageTitle : String , description : String ,actionTitle : String) {
-        let ac = UIAlertController(title: messageTitle, message: description, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: actionTitle, style: .default)
-        {
-            (result : UIAlertAction) -> Void in
-            _ = self.navigationController?.popViewController(animated: true)
-        })
-        present(ac, animated: true)
-    }
-    
-    // Recording
-    func startRecording() {
-        if isRecording {
-            finishRecording(success: true)
-            isRecording = false
-        } else {
-            audioRecorder.record()
-            meterTimer = Timer.scheduledTimer(timeInterval: 0.1, target:self, selector:#selector(self.updateAudioMeter(timer:)), userInfo:nil, repeats:true)
-            isRecording = true
-        }
-    }
-    
-    @objc func updateAudioMeter(timer: Timer) {
-        if audioRecorder.isRecording {
-            audioRecorder.updateMeters()
-        }
-    }
-
     
     func finishRecording(success: Bool) {
+        audioRecorder.stop()
+        audioRecorder = nil
+        
         if success {
-            audioRecorder.stop()
-            audioRecorder = nil
-            meterTimer.invalidate()
-            print("Successfully recorded!")
+            recordButton.setTitle("Tap to Re-record", for: .normal)
         } else {
-            displayAlert(messageTitle: "Error", description: "Recording failed.", actionTitle: "OK")
+            recordButton.setTitle("Tap to Record", for: .normal)
+            // recording failed :(
         }
     }
     
-    // Playback
-    func prepareToPlay(fileID: String) {
+    @IBAction func recordTapped(_ sender: Any) {
+        if audioRecorder == nil {
+            startRecording()
+        } else {
+            finishRecording(success: true)
+        }
+    }
+    @IBAction func playTapped(_ sender: Any) {
+        
+        guard let url = Bundle.main.url(forResource: "recording", withExtension: "m4a") else { return }
+        
         do {
-            audioPlayer = try AVAudioPlayer(contentsOf: getFileUrl(fileID: fileID))
-            audioPlayer.delegate = self
-            audioPlayer.prepareToPlay()
-        } catch{
-            print("Error")
+            print(url)
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+            
+            /* The following line is required for the player to work on iOS 11. Change the file type accordingly*/
+            audioPlayer = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileType.mp3.rawValue)
+            
+            /* iOS 10 and earlier require the following line:
+             player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileTypeMPEGLayer3) */
+            
+            guard let player = audioPlayer else { return }
+            player.play()
+            
+        } catch let error {
+            print(error.localizedDescription)
         }
     }
     
-    func playRecording(fileID: String) {
-        if isPlaying  {
-            audioPlayer.stop()
-            isPlaying = false
-        } else {
-            if FileManager.default.fileExists(atPath: getFileUrl(fileID: fileID).path) {
-                prepareToPlay(fileID: fileID)
-                audioPlayer.play()
-                isPlaying = true
-            } else {
-                displayAlert(messageTitle: "Error", description: "Audio file is missing", actionTitle: "Ok?")
-            }
-        }
-    }
+    //    // Generating audio file paths
+//    func getDocumentsDirectory() -> URL {
+//        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+//        let documentsDirectory = paths[0]
+//        return documentsDirectory
+//    }
+//
+//    func getFileUrl(fileID: String) -> URL {
+//        let filename = "\(fileID).m4a"
+//        let filePath = getDocumentsDirectory().appendingPathComponent(filename)
+//        return filePath
+//    }
+//
+//    func setupRecorder(fileID: String)
+//    {
+//        if isAudioRecordingGranted
+//        {
+//            let session = AVAudioSession.sharedInstance()
+//            do
+//            {
+//                try session.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
+//                try session.setActive(true)
+//                let settings = [
+//                    AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+//                    AVSampleRateKey: 44100,
+//                    AVNumberOfChannelsKey: 2,
+//                    AVEncoderAudioQualityKey:AVAudioQuality.high.rawValue
+//                ]
+//                audioRecorder = try AVAudioRecorder(url: getFileUrl(fileID: fileID), settings: settings)
+//                audioRecorder.delegate = self
+//                audioRecorder.isMeteringEnabled = true
+//                audioRecorder.prepareToRecord()
+//            }
+//            catch let error {
+//                displayAlert(messageTitle: "Error", description: error.localizedDescription, actionTitle: "OK")
+//            }
+//        }
+//        else {
+//            displayAlert(messageTitle: "Error", description: "Don't have access to use your microphone.", actionTitle: "OK")
+//        }
+//    }
+//
+//    func displayAlert(messageTitle : String , description : String ,actionTitle : String) {
+//        let ac = UIAlertController(title: messageTitle, message: description, preferredStyle: .alert)
+//        ac.addAction(UIAlertAction(title: actionTitle, style: .default)
+//        {
+//            (result : UIAlertAction) -> Void in
+//            _ = self.navigationController?.popViewController(animated: true)
+//        })
+//        present(ac, animated: true)
+//    }
+//
+//    // Recording
+//    func startRecording() {
+//        if isRecording {
+//            finishRecording(success: true)
+//            isRecording = false
+//        } else {
+//            audioRecorder.record()
+//            meterTimer = Timer.scheduledTimer(timeInterval: 0.1, target:self, selector:#selector(self.updateAudioMeter(timer:)), userInfo:nil, repeats:true)
+//            isRecording = true
+//        }
+//    }
+//
+//    @objc func updateAudioMeter(timer: Timer) {
+//        if audioRecorder.isRecording {
+//            audioRecorder.updateMeters()
+//        }
+//    }
+//
+//
+//    func finishRecording(success: Bool) {
+//        if success {
+//            audioRecorder.stop()
+//            audioRecorder = nil
+//            meterTimer.invalidate()
+//            print("Successfully recorded!")
+//        } else {
+//            displayAlert(messageTitle: "Error", description: "Recording failed.", actionTitle: "OK")
+//        }
+//    }
+//
+//    // Playback
+//    func prepareToPlay(fileID: String) {
+//        do {
+//            audioPlayer = try AVAudioPlayer(contentsOf: getFileUrl(fileID: fileID))
+//            audioPlayer.delegate = self
+//            audioPlayer.prepareToPlay()
+//        } catch{
+//            print("Error")
+//        }
+//    }
+//
+//    func playRecording(fileID: String) {
+//        if isPlaying  {
+//            audioPlayer.stop()
+//            isPlaying = false
+//        } else {
+//            if FileManager.default.fileExists(atPath: getFileUrl(fileID: fileID).path) {
+//                prepareToPlay(fileID: fileID)
+//                audioPlayer.play()
+//                isPlaying = true
+//            } else {
+//                displayAlert(messageTitle: "Error", description: "Audio file is missing", actionTitle: "Ok?")
+//            }
+//        }
+//    }
     
     
     // MARK: Main interaction handlers
@@ -292,7 +393,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         
         // It's storing them inside the
         
-        let moment = Moment(content: UIColor.white.withAlphaComponent(0.25), doubleSided: false, horizontal: false)
+        let moment = Moment(content: UIColor.white.withAlphaComponent(0.5), doubleSided: false, horizontal: false)
         moment.position = position
         
         print("Moment count: \(moments.count)")
@@ -350,10 +451,10 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         
         // Add the content if touching the screen
             if let cameraNode = self.sceneView.pointOfView {
-                
+
                 // Adjusts for the distance
                 let adjustedPos = SCNVector3(cameraNode.position.x, cameraNode.position.y, cameraNode.position.z - 0.05)
-                
+
                 if isTouching {
                     if canAddContent(position: adjustedPos) {
                         addContent(position: adjustedPos)
@@ -366,14 +467,14 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                         self.previewView.image = nil
                         return
                     }
-                    
+
                     // Protects against first case
                     if previousMoment != nil {
                         previousMoment.isHidden = false
                     }
-                    
+
                     previousMoment = touchedMoment
-                    
+
                     let imgIdx = Int(touchedMoment.name!)!
 //
                     UIView.transition(with: self.previewView,
@@ -381,13 +482,13 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                                       options: .transitionCrossDissolve,
                                       animations: { self.previewView.image = self.frames[imgIdx] },
                                       completion: nil)
-                    
+
 //                      self.previewView.image = images[imgIdx]
 //                    touchedMoment.isHidden = true
                     previousMoment.isHidden = true
 
                 }
-            
+
 //                if !hits.isEmpty {
 //                    let detectedFrame = hits.
 //                }
@@ -432,6 +533,12 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
 extension MainViewController: AVAudioRecorderDelegate, AVAudioPlayerDelegate {
     func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         finishRecording(success: false)
+    }
+    
+    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+        if !flag {
+            finishRecording(success: false)
+        }
     }
     
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {

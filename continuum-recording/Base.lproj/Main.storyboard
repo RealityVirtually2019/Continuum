@@ -27,11 +27,27 @@
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="hEF-UM-ZzM">
                                 <rect key="frame" x="0.0" y="0.0" width="667" height="375"/>
                             </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Mey-Cv-pg2">
+                                <rect key="frame" x="559" y="20" width="45" height="30"/>
+                                <state key="normal" title="record"/>
+                                <connections>
+                                    <action selector="recordTapped:" destination="BV1-FR-VrT" eventType="touchUpInside" id="loY-pM-Yfa"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="T3h-9j-liO">
+                                <rect key="frame" x="630" y="20" width="30" height="30"/>
+                                <state key="normal" title="play"/>
+                                <connections>
+                                    <action selector="playTapped:" destination="BV1-FR-VrT" eventType="touchUpInside" id="0uH-Pw-bRX"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerY" secondItem="jwW-Ug-DfO" secondAttribute="centerY" id="63s-Pb-CaE"/>
+                            <constraint firstItem="Mey-Cv-pg2" firstAttribute="baseline" secondItem="T3h-9j-liO" secondAttribute="baseline" id="CYr-23-adS"/>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" id="G6W-Z0-Jh6"/>
+                            <constraint firstItem="Mey-Cv-pg2" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="559" id="GVj-fE-Vwm"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
                             <constraint firstItem="jwW-Ug-DfO" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" constant="66" id="HrO-Q2-8pA"/>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="leading" secondItem="BrB-h1-WRS" secondAttribute="leading" id="Iep-Mw-ZuD"/>
@@ -40,14 +56,18 @@
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerX" secondItem="jwW-Ug-DfO" secondAttribute="centerX" id="WNT-TR-9O3"/>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="trailing" secondItem="BrB-h1-WRS" secondAttribute="trailing" id="Wh2-gb-4oG"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
+                            <constraint firstItem="T3h-9j-liO" firstAttribute="leading" secondItem="Mey-Cv-pg2" secondAttribute="trailing" constant="26" id="n7q-48-OKh"/>
+                            <constraint firstItem="Mey-Cv-pg2" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" constant="20" symbolic="YES" id="onP-1R-6m1"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" id="wdZ-gA-ztZ"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                     </view>
                     <connections>
+                        <outlet property="playButton" destination="T3h-9j-liO" id="Yx7-Sn-mtd"/>
                         <outlet property="previewMask" destination="jwW-Ug-DfO" id="Bg5-8C-08N"/>
                         <outlet property="previewView" destination="hEF-UM-ZzM" id="ne7-8K-8Rt"/>
+                        <outlet property="recordButton" destination="Mey-Cv-pg2" id="ZTZ-ew-Zrz"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
                     </connections>
                 </viewController>
