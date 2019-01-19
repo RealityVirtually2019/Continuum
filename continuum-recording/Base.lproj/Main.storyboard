@@ -21,24 +21,32 @@
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="BrB-h1-WRS">
                                 <rect key="frame" x="0.0" y="0.0" width="667" height="375"/>
                             </arscnView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jwW-Ug-DfO">
+                                <rect key="frame" x="118" y="66" width="431" height="242"/>
+                            </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hEF-UM-ZzM">
-                                <rect key="frame" x="120" y="73" width="427" height="228"/>
+                                <rect key="frame" x="94" y="53" width="478" height="269"/>
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" constant="73" id="3VL-tR-6BG"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerX" secondItem="BrB-h1-WRS" secondAttribute="centerX" id="CSI-zr-hLj"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerX" secondItem="BrB-h1-WRS" secondAttribute="centerX" id="BCC-mF-zgE"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="120" id="Lpi-YD-hAo"/>
+                            <constraint firstItem="jwW-Ug-DfO" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" constant="66" id="HrO-Q2-8pA"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerY" secondItem="jwW-Ug-DfO" secondAttribute="centerY" id="HuH-w1-izN"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerX" secondItem="jwW-Ug-DfO" secondAttribute="centerX" id="IYW-gp-Q07"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" constant="53" id="Q7G-6y-T7F"/>
+                            <constraint firstItem="jwW-Ug-DfO" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="118" id="TGa-lJ-ESs"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" id="VpT-BR-CcM"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerY" secondItem="BrB-h1-WRS" secondAttribute="centerY" id="fEh-cP-5Ym"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="94" id="vLP-zi-yBR"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="centerY" secondItem="BrB-h1-WRS" secondAttribute="centerY" id="xW5-zU-Pi6"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                     </view>
                     <connections>
+                        <outlet property="previewMask" destination="jwW-Ug-DfO" id="Bg5-8C-08N"/>
                         <outlet property="previewView" destination="hEF-UM-ZzM" id="ne7-8K-8Rt"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
                     </connections>

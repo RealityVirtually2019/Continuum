@@ -147,10 +147,23 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     @IBOutlet var sceneView: ARSCNView!
     @IBOutlet weak var previewView: UIImageView! {
         didSet {
-            previewView.layer.cornerRadius = 2.5
+            previewView.layer.cornerRadius = 5
             previewView.clipsToBounds = true
+            
+//            // Create a mutable path and add a rectangle that will be h
+//            let mutablePath = CGMutablePath()
+//            mutablePath.addRect(previewView.bounds)
+//            mutablePath.addRect(previewMask.bounds)
+//
+//            // Create a shape layer and cut out the intersection
+//            let mask = CAShapeLayer()
+//            mask.path = mutablePath
+//            mask.fillRule = CAShapeLayerFillRule.evenOdd
+//
+//            previewView.layer.mask = mask
         }
     }
+    @IBOutlet weak var previewMask: UIImageView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -170,6 +183,9 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
 //        sceneView.rendersContinuously = false
         
         // Set the scene to the view
+        view.bringSubviewToFront(previewView)
+        view.bringSubviewToFront(previewMask)
+        
         sceneView.scene = scene
     }
     
@@ -227,6 +243,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         
         // ID, figute this out
         moment.name = "\(moments.count)"
+        moment.simdTransform = frame.camera.transform
         
         // This causes AWFUL memory issues
 //        moment.geometry?.firstMaterial?.diffuse.contents = sceneView.snapshot()
