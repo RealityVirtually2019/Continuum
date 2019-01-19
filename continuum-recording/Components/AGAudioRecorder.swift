@@ -77,8 +77,14 @@ class AGAudioRecorder: NSObject {
         return documentsDirectory
     }
     
-    func fileUrl() -> URL {
+    func currentFileURL() -> URL {
         let filename = "\(self.filename).m4a"
+        let filePath = documentsDirectory().appendingPathComponent(filename)
+        return filePath
+    }
+    
+    func fileURL(fileID: String) -> URL {
+        let filename = fileID + ".m4a"
         let filePath = documentsDirectory().appendingPathComponent(filename)
         return filePath
     }
@@ -109,7 +115,7 @@ class AGAudioRecorder: NSObject {
                     AVNumberOfChannelsKey: 2,
                     AVEncoderAudioQualityKey:AVAudioQuality.high.rawValue
                 ]
-                audioRecorder = try AVAudioRecorder(url: fileUrl(), settings: settings)
+                audioRecorder = try AVAudioRecorder(url: currentFileURL(), settings: settings)
                 audioRecorder.delegate = self
                 audioRecorder.isMeteringEnabled = true
                 audioRecorder.prepareToRecord()
@@ -149,7 +155,20 @@ class AGAudioRecorder: NSObject {
     
     private func preparePlay() {
         do {
-            audioPlayer = try AVAudioPlayer(contentsOf: fileUrl())
+            audioPlayer = try AVAudioPlayer(contentsOf: currentFileURL())
+            audioPlayer.delegate = self
+            audioPlayer.prepareToPlay()
+            recorderState = .Ready
+        }
+        catch {
+            recorderState = .error(error)
+            debugPrint(error)
+        }
+    }
+    
+    private func preparePlay(fileID: String) {
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: fileURL(fileID: fileID))
             audioPlayer.delegate = self
             audioPlayer.prepareToPlay()
             recorderState = .Ready
@@ -193,7 +212,6 @@ class AGAudioRecorder: NSObject {
     }
     
     func doPlay() {
-        
         if audioPlayer == nil {
             self.preparePlay()
         }
@@ -206,8 +224,32 @@ class AGAudioRecorder: NSObject {
             doPause()
         }
         else{
-            if FileManager.default.fileExists(atPath: fileUrl().path) {
+            if FileManager.default.fileExists(atPath: currentFileURL().path) {
                 preparePlay()
+                audioPlayer.play()
+                recorderState = .Play
+            }
+            else {
+                recorderState = .Failed("Audio file is missing.")
+            }
+        }
+    }
+    
+    func doPlay(fileID: String) {
+        if audioPlayer == nil {
+            self.preparePlay(fileID: fileID)
+        }
+        
+        if audioRecorder != nil, audioRecorder.isRecording {
+            self.doStopRecording()
+        }
+        
+        if audioPlayer.isPlaying {
+            doPause()
+        }
+        else{
+            if FileManager.default.fileExists(atPath: fileURL(fileID: fileID).path) {
+                self.preparePlay(fileID: fileID)
                 audioPlayer.play()
                 recorderState = .Play
             }

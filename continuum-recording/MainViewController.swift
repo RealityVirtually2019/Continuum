@@ -22,12 +22,12 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // A path is made up arrays of moments!
     // Stored as a dictionary with the path ID?
     var paths: [String: [Moment]] = [String: [Moment]]()
-
+    // How to store by ID?
+    var frames: [UIImage] = [UIImage]()
+    var audioFiles: [String] = [String]()
+    
     // Store moments
     var moments: [Moment] = [Moment]()
-    
-    // Store the image frames separately
-    var frames: [UIImage] = [UIImage]()
     
     var previousMoment: Moment! {
         didSet {
@@ -58,7 +58,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     // MARK: Recorder class
     var state: AGAudioRecorderState = .Ready
-    var recorder: AGAudioRecorder = AGAudioRecorder(withFileName: "TempFile")
+    var recorder: AGAudioRecorder = AGAudioRecorder(withFileName: "0")
     
     // MARK: IBOutlets
     @IBOutlet weak var recordButton: UIButton!
@@ -132,11 +132,14 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // Began is used to ADD content once the settings are adjusted
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = true
+        recorder.changeFile(withFileName: "\(moments.count)")
+        recorder.doRecord()
     }
     
     // Stops recording
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = false
+        recorder.doStopRecording()
     }
     
     // MARK: Helper methods for adding content
@@ -218,11 +221,19 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     // Need to check if camera position is touching one of the moments nodes
                     // distance between camera and position
                     // Need to make this less sensitive
-                    
                     guard let touchedMoment = moments.first(where: { distance($0.position, cameraNode.position) < 0.01 }) else {
                         self.previewView.image = nil
+                        self.isPlaying = false
                         return
                     }
+                    
+                    print("TOUCHED: \(touchedMoment.id)")
+                    
+                    if !isPlaying {
+                        recorder.doPlay(fileID: String(touchedMoment.id))
+                    }
+                    
+                    isPlaying = true
                     
                     previousMoment = touchedMoment
                     let imgIdx = touchedMoment.id
