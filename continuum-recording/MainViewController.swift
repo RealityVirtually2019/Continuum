@@ -26,6 +26,21 @@ extension UIView {
     }
 }
 
+extension SCNNode {
+    func cleanup() {
+        for child in childNodes {
+            child.cleanup()
+        }
+        geometry = nil
+    }
+}
+
+enum InteractionState {
+    case ready
+    case recording
+    case viewing
+}
+
 class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     // MARK: Data management
@@ -46,6 +61,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     var allMoments: [Moment] = [Moment]()
     var currentMoments: [Moment] = [Moment]()
     var currentTouchedMoment: Moment!
+    var selectedPath: Int! = 0
     
     var previousMoment: Moment! {
         didSet {
@@ -64,15 +80,54 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         }
     }
     
+    @IBOutlet weak var filter1: UIButton! {
+        didSet {
+            filter1.tag = 1
+        }
+    }
+    @IBOutlet weak var filter2: UIButton! {
+        didSet {
+            filter2.tag = 2
+        }
+    }
+    @IBOutlet weak var filter3: UIButton! {
+        didSet {
+            filter3.tag = 3
+        }
+    }
+    @IBOutlet weak var filter4: UIButton! {
+        didSet {
+            filter4.tag = 4
+        }
+    }
+    @IBOutlet weak var filter5: UIButton! {
+        didSet {
+            filter5.tag = 5
+        }
+    }
+    
+    @IBAction func pressFilter(_ sender: UIButton) {
+        let ciContext = CIContext(options: nil)
+        
+        // grab the images from the selctd path
+        
+        for img in frames[selectedPath]! {
+            let coreImage = CIImage(image: img)
+            let filter = CIFilter(name: "\(CIFilterNames[sender.tag-1])" )
+            filter!.setDefaults()
+            filter!.setValue(coreImage, forKey: kCIInputImageKey)
+            let filteredImageData = filter!.value(forKey: kCIOutputImageKey) as! CIImage
+            let filteredImageRef = ciContext.createCGImage(filteredImageData, from: filteredImageData.extent)
+//            img = UIImage(CGImage: filteredImageRef!)
+        }
+    }
+    
     // MARK: Filters???
     var CIFilterNames = [
         "CIPhotoEffectChrome",
         "CIPhotoEffectFade",
-        "CIPhotoEffectInstant",
         "CIPhotoEffectNoir",
-        "CIPhotoEffectProcess",
         "CIPhotoEffectTonal",
-        "CIPhotoEffectTransfer",
         "CISepiaTone"
     ]
     
@@ -82,6 +137,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // How to store the data?
     
     // MARK: State
+    var interactionState: InteractionState = .ready
     var isTouching = false
     var isRecording = false
     var isPlaying = false
@@ -93,24 +149,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // MARK: IBOutlets
     @IBOutlet weak var recordButton: UIButton!
     @IBOutlet weak var playButton: UIButton!
-    
-    @IBOutlet weak var recordingCircle: UIView! {
-        didSet {
-            recordingCircle.makeCircular()
-            
-            var colorView = UIView(frame: recordingCircle.bounds)
-            colorView.backgroundColor = UIColor.red.withAlphaComponent(0.5)
-            recordingCircle.addSubview(colorView)
-            
-            var blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: UIBlurEffect.Style.light))
-            blurEffectView.clipsToBounds = true
-            blurEffectView.frame = recordingCircle.bounds
-            recordingCircle.addSubview(blurEffectView)
-            
-            recordingCircle.backgroundColor = UIColor.clear
-            recordingCircle.layer.opacity = 0
-        }
-    }
+    var recordingCircle: UIView!
     
     @IBOutlet weak var statusLabel: UILabel!
     @IBOutlet var sceneView: ARSCNView!
@@ -146,6 +185,24 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
 
         view.bringSubviewToFront(previewView)
         
+        recordingCircle = UIView(frame: CGRect(x: 0, y: 0, width: 150, height: 150))
+        recordingCircle.center = CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
+        recordingCircle.makeCircular()
+        
+        var colorView = UIView(frame: recordingCircle.bounds)
+        colorView.backgroundColor = UIColor.red.withAlphaComponent(0.5)
+        recordingCircle.addSubview(colorView)
+        
+        var blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: UIBlurEffect.Style.light))
+        blurEffectView.clipsToBounds = true
+        blurEffectView.frame = recordingCircle.bounds
+        recordingCircle.addSubview(blurEffectView)
+        
+        recordingCircle.backgroundColor = UIColor.clear
+        recordingCircle.layer.opacity = 0
+        view.addSubview(recordingCircle)
+        view.bringSubviewToFront(recordingCircle)
+        
         // Set the view's delegate
         sceneView.delegate = self
         sceneView.session.delegate = self
@@ -171,7 +228,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
+    
         // Pause the view's session
         sceneView.session.pause()
     }
@@ -190,6 +247,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = true
         
+        stateChanged(state: .recording)
         recorder.changeFile(withFileName: "\(paths.count)")
         recorder.doRecord()
         
@@ -225,7 +283,43 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         endRecording()
     }
     
+    func stateChanged(state: InteractionState) {
+        switch(state){
+        case .ready:
+            print("ready")
+//            UIView.animate(withDuration: 0.25, animations: {
+//                self.statusLabel.layer.opacity = 1
+//                self.statusLabel.text = "Ready to record"
+//            }) { (finished) in
+//                self.statusLabel.layer.opacity = 0
+//            }
+            break
+        case .recording:
+            print("recording")
+//            UIView.animate(withDuration: 0.25, animations: {
+//                self.statusLabel.layer.opacity = 1
+//                self.statusLabel.text = "Recording"
+//            }) { (finished) in
+//                self.statusLabel.layer.opacity = 0
+//            }
+            break
+        case .viewing:
+            print("viewing")
+//            UIView.animate(withDuration: 0.25, animations: {
+//                self.statusLabel.layer.opacity = 1
+//                self.statusLabel.text = "Viewing"
+//            }) { (finished) in
+//                self.statusLabel.layer.opacity = 0
+//            }
+            break
+        default:
+            print("ready")
+            break
+        }
+    }
+    
     func endRecording() {
+        stateChanged(state: .ready)
         recorder.doStopRecording()
         // Store the current moments
         paths.append(currentMoments)
@@ -326,7 +420,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         }
         
         for m  in currentMoments {
-            if distance(m.position, position) <= 0.05 {
+            if distance(m.position, position) <= 0.075 {
                 return false
             }
         }
@@ -349,12 +443,15 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     }
                 } else {
                     // Need to check if camera position is touching one of the moments nodes
-                    currentTouchedMoment = allMoments.last(where: { distance($0.position, cameraNode.position) < 0.050 })
+                    currentTouchedMoment = allMoments.last(where: { distance($0.position, cameraNode.position) < 0.075 })
                     
                     if currentTouchedMoment == nil {
                         self.isPlaying = false
                         return
                     }
+                    
+                    stateChanged(state: .viewing)
+
                     
                     if previousMoment != nil {
                         previousMoment.material.diffuse.contents = nil
@@ -363,22 +460,22 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     }
 
                     // get ending
-                    // lol u just discovered how to normalize from scratch
 //                    guard let endTime = paths[touchedMoment.pathID].last?.timestamp else { return }
 //                    guard let startTime = paths[touchedMoment.pathID].first?.timestamp else { return }
 //                    let duration = endTime - startTime
 //                    let currentTime = (touchedMoment.timestamp - startTime)/duration
 
                     if !isPlaying {
-                        recorder.doPlay(fileID: String(currentTouchedMoment.id), time: 0)
+                        recorder.doPlay(fileID: String(currentTouchedMoment.pathID), time: 0)
                     }
                     
                     isPlaying = true
                     print("filling \(allMoments.count)")
-                    
+                    var f = frames[currentTouchedMoment.pathID]![currentTouchedMoment.id]
+                    currentTouchedMoment.material.diffuse.contents = frames[currentTouchedMoment.pathID]![currentTouchedMoment.id]
                     currentTouchedMoment.material.fillMode = .fill
-                    currentTouchedMoment.material.diffuse.contents = nil
-                    currentTouchedMoment.material.diffuse.contents = self.frames[currentTouchedMoment.pathID]![currentTouchedMoment.id]
+//                    currentTouchedMoment.material.diffuse.contents = nil
+//                    currentTouchedMoment.material.diffuse.contents = frames[currentTouchedMoment.pathID]![currentTouchedMoment.id]
 //                    currentTouchedMoment.geometry?.firstMaterial?.diffuse.contents = self.frames[touchedMoment.pathID]![touchedMoment.id]
                     
                     previousMoment = currentTouchedMoment
