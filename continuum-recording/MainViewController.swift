@@ -308,10 +308,10 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         switch(self.interactionState){
         case .ready:
             print("ready")
-            UIView.animate(withDuration: 0.25, animations: {
-                self.statusLabel.layer.opacity = 1
-                self.statusLabel.text = "Hold and move forward to record"
-            })
+//            UIView.animate(withDuration: 0.25, animations: {
+//                self.statusLabel.layer.opacity = 1
+//                self.statusLabel.text = "Hold and move forward to record"
+//            })
             break
         case .finished:
             print("finished")
@@ -320,7 +320,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 self.statusLabel.text = "Check out what you made!"
             }) { (finished) in
                 print("Finished, going to ready")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                     self.stateChanged(state: .ready)
                 }
             }
@@ -515,6 +515,9 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                         // Found nil
                         if interactionState != .ready {
                             stateChanged(state: .ready)
+                        }
+                        for m in allMoments {
+                            m.material.fillMode = .lines
                         }
                         isPlaying = false
                         return
