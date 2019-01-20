@@ -35,6 +35,7 @@ class Moment: SCNNode {
         
         //2. Create A New Material
         let material = SCNMaterial()
+        material.fillMode = .lines
         
         if let colour = content as? UIColor{
             

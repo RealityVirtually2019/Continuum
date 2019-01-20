@@ -10,6 +10,16 @@ import UIKit
 import SceneKit
 import ARKit
 
+
+// Priorities for having this be cool
+// 1: Audio play at beginning of path
+// 2: Rotating the mask with the appropriate
+// Tutorial mode
+// Guiding indicators
+// 3: Selecting paths
+// 3: Focusing / darening
+// REDO IMAGES BEING STORED BY PATH ID
+
 class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
     // MARK: Data management
@@ -47,7 +57,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     }
     
     let feedback = UIImpactFeedbackGenerator(style: .light)
-
+    var backgroundView: UIView!
     
     // How to store the data?
     
@@ -88,6 +98,14 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        backgroundView = UIView(frame: UIScreen.main.bounds)
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.25)
+        backgroundView.layer.opacity = 0
+        view.bringSubviewToFront(backgroundView)
+        view.addSubview(backgroundView)
+
+        view.bringSubviewToFront(previewView)
         
         // Set the view's delegate
         sceneView.delegate = self
@@ -162,7 +180,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         frames.append(currentImage)
         
         // It's storing them inside the
-        let moment = Moment(content: UIColor.white.withAlphaComponent(0.5), doubleSided: false, horizontal: false)
+        let moment = Moment(content: UIColor.white.withAlphaComponent(0.95), doubleSided: true, horizontal: false)
         moment.position = position
         
         // Do better with IDs, maybe make a dictionary with UUIDs?
@@ -234,10 +252,19 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     // Need to check if camera position is touching one of the moments nodes
                     // distance between camera and position
                     // Need to make this less sensitive
-                    guard let touchedMoment = currentMoments.first(where: { distance($0.position, cameraNode.position) < 0.01 }) else {
+                    guard let touchedMoment = currentMoments.first(where: { distance($0.position, cameraNode.position) < 0.025 }) else {
                         self.previewView.image = nil
                         self.isPlaying = false
+                        UIView.animate(withDuration: 0.25) {
+                            self.backgroundView.layer.opacity = 0
+                        }
                         return
+                    }
+                    
+                    if backgroundView.layer.opacity == 0 {
+                        UIView.animate(withDuration: 0.5) {
+                            self.backgroundView.layer.opacity = 1
+                        }
                     }
                     
                     // get ending
@@ -246,10 +273,10 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     guard let startTime = paths[touchedMoment.pathID].first?.timestamp else { return }
                     let duration = endTime - startTime
                     let currentTime = (touchedMoment.timestamp - startTime)/duration
-                    recorder.doPlay(fileID: String(touchedMoment.id), time: currentTime)
 
-//                    if !isPlaying {
-//                    }
+                    if !isPlaying {
+                        recorder.doPlay(fileID: String(touchedMoment.id), time: 0)
+                    }
                     
                     isPlaying = true
                     
