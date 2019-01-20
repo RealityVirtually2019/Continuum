@@ -24,78 +24,31 @@
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="hEF-UM-ZzM">
                                 <rect key="frame" x="0.0" y="0.0" width="667" height="375"/>
                             </imageView>
-                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="G1N-lY-kZL">
-                                <rect key="frame" x="617" y="20" width="30" height="150"/>
-                                <subviews>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eWF-xX-QhG">
-                                        <rect key="frame" x="0.0" y="0.0" width="30" height="30"/>
-                                        <state key="normal" title="1"/>
-                                        <connections>
-                                            <action selector="pressFilter:" destination="BV1-FR-VrT" eventType="touchUpInside" id="XW5-gk-uaT"/>
-                                        </connections>
-                                    </button>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="WaI-nx-3Rz">
-                                        <rect key="frame" x="0.0" y="30" width="30" height="30"/>
-                                        <state key="normal" title="2"/>
-                                        <connections>
-                                            <action selector="pressFilter:" destination="BV1-FR-VrT" eventType="touchUpInside" id="snv-Mb-Eaa"/>
-                                        </connections>
-                                    </button>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7Cr-1z-wDR">
-                                        <rect key="frame" x="0.0" y="60" width="30" height="30"/>
-                                        <state key="normal" title="3"/>
-                                        <connections>
-                                            <action selector="pressFilter:" destination="BV1-FR-VrT" eventType="touchUpInside" id="ms4-BZ-GY8"/>
-                                        </connections>
-                                    </button>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="H8u-H7-yf1">
-                                        <rect key="frame" x="0.0" y="90" width="30" height="30"/>
-                                        <state key="normal" title="4"/>
-                                        <connections>
-                                            <action selector="pressFilter:" destination="BV1-FR-VrT" eventType="touchUpInside" id="ebj-nw-VBn"/>
-                                        </connections>
-                                    </button>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="PyK-XK-cSF">
-                                        <rect key="frame" x="0.0" y="120" width="30" height="30"/>
-                                        <state key="normal" title="5"/>
-                                        <connections>
-                                            <action selector="pressFilter:" destination="BV1-FR-VrT" eventType="touchUpInside" id="xG3-j4-hPJ"/>
-                                        </connections>
-                                    </button>
-                                </subviews>
-                            </stackView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="F3P-Hj-Omf">
-                                <rect key="frame" x="242" y="20" width="183" height="42"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <rect key="frame" x="127" y="158" width="413" height="59"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="24"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="F3P-Hj-Omf" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" constant="20" symbolic="YES" id="0lQ-uh-j3r"/>
-                            <constraint firstItem="fQZ-KI-GVf" firstAttribute="bottom" secondItem="F3P-Hj-Omf" secondAttribute="bottom" constant="313" id="5Yl-gt-XEK"/>
+                            <constraint firstItem="F3P-Hj-Omf" firstAttribute="centerY" secondItem="BrB-h1-WRS" secondAttribute="centerY" id="9CQ-BD-6gL"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
-                            <constraint firstItem="F3P-Hj-Omf" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="242" id="Qg5-it-bTa"/>
+                            <constraint firstItem="F3P-Hj-Omf" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" constant="158" id="OeQ-NQ-svT"/>
+                            <constraint firstItem="F3P-Hj-Omf" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="127" id="S8T-vO-Jsi"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" id="VpT-BR-CcM"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="trailing" secondItem="BrB-h1-WRS" secondAttribute="trailing" id="ZpF-qd-Woj"/>
-                            <constraint firstItem="F3P-Hj-Omf" firstAttribute="centerX" secondItem="hEF-UM-ZzM" secondAttribute="centerX" id="dL1-qO-h6J"/>
+                            <constraint firstItem="F3P-Hj-Omf" firstAttribute="centerX" secondItem="BrB-h1-WRS" secondAttribute="centerX" id="jAA-lq-oOK"/>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="bottom" secondItem="BrB-h1-WRS" secondAttribute="bottom" id="kA9-5l-eTL"/>
-                            <constraint firstItem="F3P-Hj-Omf" firstAttribute="top" secondItem="G1N-lY-kZL" secondAttribute="top" id="oC4-oD-0WY"/>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="leading" secondItem="BrB-h1-WRS" secondAttribute="leading" id="ohH-5P-BMa"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
-                            <constraint firstItem="G1N-lY-kZL" firstAttribute="trailing" secondItem="U0K-SW-4ec" secondAttribute="trailingMargin" id="sma-1b-VcY"/>
                             <constraint firstItem="hEF-UM-ZzM" firstAttribute="top" secondItem="BrB-h1-WRS" secondAttribute="top" id="vHC-on-oeh"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                     </view>
                     <connections>
-                        <outlet property="filter1" destination="eWF-xX-QhG" id="GDT-ht-xrZ"/>
-                        <outlet property="filter2" destination="WaI-nx-3Rz" id="iG5-b1-ONM"/>
-                        <outlet property="filter3" destination="7Cr-1z-wDR" id="QGh-8y-qST"/>
-                        <outlet property="filter4" destination="H8u-H7-yf1" id="Su3-vH-EHK"/>
-                        <outlet property="filter5" destination="PyK-XK-cSF" id="CTo-TS-PLY"/>
                         <outlet property="previewView" destination="hEF-UM-ZzM" id="ne7-8K-8Rt"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
                         <outlet property="statusLabel" destination="F3P-Hj-Omf" id="z4x-ZQ-qOL"/>

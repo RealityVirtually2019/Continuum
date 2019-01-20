@@ -155,7 +155,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     @IBOutlet weak var statusLabel: UILabel! {
         didSet {
-            statusLabel.text = "Hold and move forward"
+            statusLabel.text = "Hold and move forward to record"
             statusLabel.backgroundColor = UIColor.white.withAlphaComponent(0.5)
             statusLabel.layer.cornerRadius = 10
             statusLabel.clipsToBounds = true
@@ -310,7 +310,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             print("ready")
             UIView.animate(withDuration: 0.25, animations: {
                 self.statusLabel.layer.opacity = 1
-                self.statusLabel.text = "Hold and move forward"
+                self.statusLabel.text = "Hold and move forward to record"
             })
             break
         case .finished:
@@ -320,7 +320,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 self.statusLabel.text = "Check out what you made!"
             }) { (finished) in
                 print("Finished, going to ready")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     self.stateChanged(state: .ready)
                 }
             }
@@ -382,6 +382,37 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         // Do better with IDs, maybe make a dictionary with UUIDs?
         moment.id = currentMoments.count
         moment.pathID = paths.count
+        
+        // First frame
+        if moment.id == 0 {
+//            let animLoop = SCNAction.repeatForever(SCNAction.sequence([SCNAction.scale(to: 1.5, duration: 0.25), SCNAction.scale(to: 0.75, duration: 0.25)]))
+//            moment.runAction(animLoop)
+//
+            
+            
+            let pulseSize:CGFloat = 0.1
+            let pulsePlane = SCNPlane(width: pulseSize, height: pulseSize)
+            pulsePlane.firstMaterial?.isDoubleSided = true
+            pulsePlane.firstMaterial?.diffuse.contents = UIColor.white
+            let pulseNode = SCNNode(geometry: pulsePlane)
+            
+            let pulseShaderModifier =
+                "#pragma transparent; \n" +
+                    "vec4 originalColour = _surface.diffuse; \n" +
+                    "vec4 transformed_position = u_inverseModelTransform * u_inverseViewTransform * vec4(_surface.position, 1.0); \n" +
+                    "vec2 xy = vec2(transformed_position.x, transformed_position.y); \n" +
+                    "float xyLength = length(xy); \n" +
+                    "float xyLengthNormalised = xyLength/" + String(describing: pulseSize / 2) + "; \n" +
+                    "float speedFactor = 1.5; \n" +
+                    "float maxDist = fmod(u_time, speedFactor) / speedFactor; \n" +
+                    "float distbasedalpha = step(maxDist, xyLengthNormalised); \n" +
+                    "distbasedalpha = max(distbasedalpha, maxDist); \n" +
+            "_surface.diffuse = mix(originalColour, vec4(0.0), distbasedalpha);"
+            
+            pulsePlane.firstMaterial?.shaderModifiers = [SCNShaderModifierEntryPoint.surface:pulseShaderModifier]
+            moment.addChildNode(pulseNode)
+            
+        }
         
         // Initialize the frames moment array
         if frames[moment.pathID] == nil {
@@ -469,7 +500,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 // Adjusts for the distance
                 let adjustedPos = SCNVector3(cameraNode.position.x, cameraNode.position.y, cameraNode.position.z - 0.05)
 
-                if isTouching {
+                if isTouching && interactionState == .recording {
                     if canAddContent(position: adjustedPos) {
                         addContent(position: adjustedPos)
                     }
