@@ -39,12 +39,13 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // Stored as a dictionary with the path ID?
     var paths: [[Moment]] = [[Moment]]()
     // How to store by ID?
-    var frames: [UIImage] = [UIImage]()
+    var frames: [Int: [UIImage]] = [Int: [UIImage]]()
     var audioFiles: [String] = [String]()
     
     // Store the currently recorded moments
     var allMoments: [Moment] = [Moment]()
     var currentMoments: [Moment] = [Moment]()
+    var currentTouchedMoment: Moment!
     
     var previousMoment: Moment! {
         didSet {
@@ -62,6 +63,18 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             }
         }
     }
+    
+    // MARK: Filters???
+    var CIFilterNames = [
+        "CIPhotoEffectChrome",
+        "CIPhotoEffectFade",
+        "CIPhotoEffectInstant",
+        "CIPhotoEffectNoir",
+        "CIPhotoEffectProcess",
+        "CIPhotoEffectTonal",
+        "CIPhotoEffectTransfer",
+        "CISepiaTone"
+    ]
     
     let feedback = UIImpactFeedbackGenerator(style: .light)
     var backgroundView: UIView!
@@ -84,11 +97,18 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     @IBOutlet weak var recordingCircle: UIView! {
         didSet {
             recordingCircle.makeCircular()
-            var visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
-            visualEffectView.frame = recordingCircle.bounds
-            recordingCircle.addSubview(visualEffectView)
-            self.recordingCircle.backgroundColor = UIColor.white
-            self.recordingCircle.layer.opacity = 0.15
+            
+            var colorView = UIView(frame: recordingCircle.bounds)
+            colorView.backgroundColor = UIColor.red.withAlphaComponent(0.5)
+            recordingCircle.addSubview(colorView)
+            
+            var blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: UIBlurEffect.Style.light))
+            blurEffectView.clipsToBounds = true
+            blurEffectView.frame = recordingCircle.bounds
+            recordingCircle.addSubview(blurEffectView)
+            
+            recordingCircle.backgroundColor = UIColor.clear
+            recordingCircle.layer.opacity = 0
         }
     }
     
@@ -169,17 +189,31 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // Began is used to ADD content once the settings are adjusted
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = true
+        
         recorder.changeFile(withFileName: "\(paths.count)")
         recorder.doRecord()
         
+        
+        let touch = touches.first as! UITouch
+        if(touch.view == self.sceneView){
+            let viewTouchLocation:CGPoint = touch.location(in: sceneView)
+            UIView.animate(withDuration: 0.25) {
+                self.recordingCircle.transform = CGAffineTransform(scaleX: 1.25, y: 1.25)
+                self.recordingCircle.center = viewTouchLocation
+            }
+        }
+        
         UIView.animate(withDuration: 0.75, delay:0, options: [.repeat, .autoreverse], animations: {
-            self.recordingCircle.backgroundColor = UIColor.red
             self.recordingCircle.layer.opacity = 1
         }, completion: nil)
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        
+        let touch = touches.first as! UITouch
+        if(touch.view == self.sceneView){
+            let viewTouchLocation:CGPoint = touch.location(in: sceneView)
+            recordingCircle.center = viewTouchLocation
+        }
     }
     
     // Access a frame by accessing path then frame index
@@ -188,16 +222,25 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // Stops recording
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = false
+        endRecording()
+    }
+    
+    func endRecording() {
         recorder.doStopRecording()
         // Store the current moments
         paths.append(currentMoments)
         currentMoments.removeAll()
         
-        UIView.animate(withDuration: 0.25) {
-            self.recordingCircle.backgroundColor = UIColor.white
-            self.recordingCircle.layer.opacity = 0.25
+        
+        UIView.animate(withDuration: 0.25, animations: {
+            
+            self.recordingCircle.transform = CGAffineTransform(scaleX: 0.75, y: 0.75)
+            self.recordingCircle.layer.opacity = 0
+            
+        }) { (finished) in
+            
+            self.recordingCircle.layer.removeAllAnimations()
         }
-        recordingCircle.layer.removeAllAnimations()
     }
     
     // MARK: Helper methods for adding content
@@ -212,7 +255,6 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         let currentImage = sceneView.snapshot()
         
         // Store the images separately
-        frames.append(currentImage)
         
         // It's storing them inside the
         let moment = Moment(content: UIColor.white, doubleSided: true, horizontal: false)
@@ -221,6 +263,13 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         // Do better with IDs, maybe make a dictionary with UUIDs?
         moment.id = currentMoments.count
         moment.pathID = paths.count
+        
+        // Initialize the frames moment array
+        if frames[moment.pathID] == nil {
+            frames[moment.pathID] = [UIImage]()
+        }
+        
+        frames[moment.pathID]!.append(currentImage)
         
         moment.name = "\(currentMoments.count)"
         moment.timestamp = frame.timestamp
@@ -266,14 +315,22 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     
     // Use this to validate adding new content when pressing down
     func canAddContent(position: SCNVector3) -> Bool {
+        
         if currentMoments.count < 1 {
             return true
         }
+        
+        if currentMoments.count > 100 {
+            endRecording()
+            return false
+        }
+        
         for m  in currentMoments {
             if distance(m.position, position) <= 0.05 {
                 return false
             }
         }
+        
         return true
     }
     
@@ -292,44 +349,45 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     }
                 } else {
                     // Need to check if camera position is touching one of the moments nodes
-                    // distance between camera and position
-                    // Need to make this less sensitive
-                    guard let touchedMoment = allMoments.first(where: { distance($0.position, cameraNode.position) < 0.040 }) else {
-                        self.previewView.image = nil
+                    currentTouchedMoment = allMoments.last(where: { distance($0.position, cameraNode.position) < 0.050 })
+                    
+                    if currentTouchedMoment == nil {
                         self.isPlaying = false
-                        UIView.animate(withDuration: 0.25) {
-                            self.backgroundView.layer.opacity = 0
-                        }
                         return
                     }
                     
-                    if backgroundView.layer.opacity == 0 {
-                        UIView.animate(withDuration: 0.5) {
-                            self.backgroundView.layer.opacity = 1
-                        }
+                    if previousMoment != nil {
+                        previousMoment.material.diffuse.contents = nil
+                        previousMoment.material.fillMode = .lines
+                        previousMoment.material.diffuse.contents = UIColor.white
                     }
-                    
+
                     // get ending
                     // lol u just discovered how to normalize from scratch
-                    guard let endTime = paths[touchedMoment.pathID].last?.timestamp else { return }
-                    guard let startTime = paths[touchedMoment.pathID].first?.timestamp else { return }
-                    let duration = endTime - startTime
-                    let currentTime = (touchedMoment.timestamp - startTime)/duration
+//                    guard let endTime = paths[touchedMoment.pathID].last?.timestamp else { return }
+//                    guard let startTime = paths[touchedMoment.pathID].first?.timestamp else { return }
+//                    let duration = endTime - startTime
+//                    let currentTime = (touchedMoment.timestamp - startTime)/duration
 
                     if !isPlaying {
-                        recorder.doPlay(fileID: String(touchedMoment.id), time: 0)
+                        recorder.doPlay(fileID: String(currentTouchedMoment.id), time: 0)
                     }
                     
                     isPlaying = true
+                    print("filling \(allMoments.count)")
                     
-                    previousMoment = touchedMoment
-                    let imgIdx = touchedMoment.id
+                    currentTouchedMoment.material.fillMode = .fill
+                    currentTouchedMoment.material.diffuse.contents = nil
+                    currentTouchedMoment.material.diffuse.contents = self.frames[currentTouchedMoment.pathID]![currentTouchedMoment.id]
+//                    currentTouchedMoment.geometry?.firstMaterial?.diffuse.contents = self.frames[touchedMoment.pathID]![touchedMoment.id]
                     
-                    UIView.transition(with: self.previewView,
-                                      duration: 0.5,
-                                      options: .transitionCrossDissolve,
-                                      animations: { self.previewView.image = self.frames[imgIdx!] },
-                                      completion: nil)
+                    previousMoment = currentTouchedMoment
+                    
+//                    UIView.transition(with: self.previewView,
+//                                      duration: 0.5,
+//                                      options: .transitionCrossDissolve,
+//                                      animations: { self.previewView.image = self.frames[imgIdx!] },
+//                                      completion: nil)
 
 
                 }
