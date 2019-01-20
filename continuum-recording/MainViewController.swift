@@ -38,6 +38,7 @@ extension SCNNode {
 enum InteractionState {
     case ready
     case recording
+    case finished
     case viewing
 }
 
@@ -85,6 +86,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             filter1.tag = 1
         }
     }
+    
     @IBOutlet weak var filter2: UIButton! {
         didSet {
             filter2.tag = 2
@@ -151,7 +153,29 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     @IBOutlet weak var playButton: UIButton!
     var recordingCircle: UIView!
     
-    @IBOutlet weak var statusLabel: UILabel!
+    @IBOutlet weak var statusLabel: UILabel! {
+        didSet {
+            statusLabel.text = "Hold and move forward"
+            statusLabel.backgroundColor = UIColor.white.withAlphaComponent(0.5)
+            statusLabel.layer.cornerRadius = 10
+            statusLabel.clipsToBounds = true
+            
+//            var blurEffectView = UIVisualEffectView(effect: UIBlurEffect(style: UIBlurEffect.Style.light))
+//            blurEffectView.clipsToBounds = true
+//            blurEffectView.frame = CGRect(x: statusLabel.bounds.minX, y: statusLabel.bounds.minY, width: statusLabel.bounds.width*2, height: statusLabel.bounds.height*2)
+//            statusLabel.addSubview(blurEffectView)
+////
+//            let label = UILabel()
+//            label.frame = statusLabel.bounds
+//            label.text = "Hold and move forward"
+//            label.textColor = [UIColor colorWithWhite:0.4f alpha:1.0f];
+            
+            // add the label to effect view
+//            [blurView.contentView addSubview:label];
+            
+        }
+    }
+    
     @IBOutlet var sceneView: ARSCNView!
     @IBOutlet weak var previewView: UIImageView! {
         didSet {
@@ -242,6 +266,9 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         recorder.doPlay()
     }
     
+    
+    // Add a bool for when you finished but you are still holding down
+    
     // MARK: Main interaction handlers
     // Began is used to ADD content once the settings are adjusted
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -266,14 +293,6 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         }, completion: nil)
     }
     
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        let touch = touches.first as! UITouch
-        if(touch.view == self.sceneView){
-            let viewTouchLocation:CGPoint = touch.location(in: sceneView)
-            recordingCircle.center = viewTouchLocation
-        }
-    }
-    
     // Access a frame by accessing path then frame index
     // So paths[0][5] is the 5th frame of the 0th path
     
@@ -281,36 +300,42 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = false
         endRecording()
+        stateChanged(state: .ready)
     }
     
     func stateChanged(state: InteractionState) {
-        switch(state){
+        self.interactionState = state
+        switch(self.interactionState){
         case .ready:
             print("ready")
-//            UIView.animate(withDuration: 0.25, animations: {
-//                self.statusLabel.layer.opacity = 1
-//                self.statusLabel.text = "Ready to record"
-//            }) { (finished) in
-//                self.statusLabel.layer.opacity = 0
-//            }
+            UIView.animate(withDuration: 0.25, animations: {
+                self.statusLabel.layer.opacity = 1
+                self.statusLabel.text = "Hold and move forward"
+            })
+            break
+        case .finished:
+            print("finished")
+            UIView.animate(withDuration: 0.25, animations: {
+                self.statusLabel.layer.opacity = 1
+                self.statusLabel.text = "Check out what you made!"
+            }) { (finished) in
+                print("Finished, going to ready")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    self.stateChanged(state: .ready)
+                }
+            }
             break
         case .recording:
             print("recording")
-//            UIView.animate(withDuration: 0.25, animations: {
-//                self.statusLabel.layer.opacity = 1
-//                self.statusLabel.text = "Recording"
-//            }) { (finished) in
-//                self.statusLabel.layer.opacity = 0
-//            }
+            UIView.animate(withDuration: 0.25, animations: {
+                self.statusLabel.layer.opacity = 0
+            }, completion: nil)
             break
         case .viewing:
             print("viewing")
-//            UIView.animate(withDuration: 0.25, animations: {
-//                self.statusLabel.layer.opacity = 1
-//                self.statusLabel.text = "Viewing"
-//            }) { (finished) in
-//                self.statusLabel.layer.opacity = 0
-//            }
+            UIView.animate(withDuration: 0.25, animations: {
+                self.statusLabel.layer.opacity = 0
+            }, completion: nil)
             break
         default:
             print("ready")
@@ -319,7 +344,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     }
     
     func endRecording() {
-        stateChanged(state: .ready)
+        stateChanged(state: .finished)
         recorder.doStopRecording()
         // Store the current moments
         paths.append(currentMoments)
@@ -368,7 +393,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         moment.name = "\(currentMoments.count)"
         moment.timestamp = frame.timestamp
         
-        print(moment.timestamp)
+//        print(moment.timestamp)
         
         moment.simdTransform = frame.camera.transform
         
@@ -414,13 +439,20 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             return true
         }
         
-        if currentMoments.count > 100 {
+        if currentMoments.count > 20 {
             endRecording()
             return false
         }
         
+//        let currScale: CGFloat = CGFloat((50 - currentMoments.count)/50)
+//        print(currScale)
+//        // Animate the circle
+//        UIView.animate(withDuration: 0.25, animations: {
+//            self.recordingCircle.transform = CGAffineTransform(scaleX: currScale, y: currScale)
+//        }, completion: nil)
+//
         for m  in currentMoments {
-            if distance(m.position, position) <= 0.075 {
+            if distance(m.position, position) <= 0.06 {
                 return false
             }
         }
@@ -442,50 +474,39 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                         addContent(position: adjustedPos)
                     }
                 } else {
-                    // Need to check if camera position is touching one of the moments nodes
-                    currentTouchedMoment = allMoments.last(where: { distance($0.position, cameraNode.position) < 0.075 })
                     
-                    if currentTouchedMoment == nil {
-                        self.isPlaying = false
+                    // REMEMBER: isPlaying is for the audio
+                    // Need to check if camera position is touching one of the moments nodes
+                    guard let currentTouchedMoment = allMoments.last(where: { distance($0.position, cameraNode.position) < 0.06*1.5 }) else {
+                        
+                        print("Nil: \(self.interactionState)")
+                        
+                        // Found nil
+                        if interactionState != .ready {
+                            stateChanged(state: .ready)
+                        }
+                        isPlaying = false
                         return
                     }
                     
-                    stateChanged(state: .viewing)
-
+                    // Viewing if you get a movement
+                    if interactionState != .viewing {
+                        stateChanged(state: .viewing)
+                        isPlaying = true
+                    }
                     
                     if previousMoment != nil {
-                        previousMoment.material.diffuse.contents = nil
                         previousMoment.material.fillMode = .lines
                         previousMoment.material.diffuse.contents = UIColor.white
                     }
-
-                    // get ending
-//                    guard let endTime = paths[touchedMoment.pathID].last?.timestamp else { return }
-//                    guard let startTime = paths[touchedMoment.pathID].first?.timestamp else { return }
-//                    let duration = endTime - startTime
-//                    let currentTime = (touchedMoment.timestamp - startTime)/duration
-
+                    
                     if !isPlaying {
                         recorder.doPlay(fileID: String(currentTouchedMoment.pathID), time: 0)
                     }
                     
-                    isPlaying = true
-                    print("filling \(allMoments.count)")
-                    var f = frames[currentTouchedMoment.pathID]![currentTouchedMoment.id]
                     currentTouchedMoment.material.diffuse.contents = frames[currentTouchedMoment.pathID]![currentTouchedMoment.id]
                     currentTouchedMoment.material.fillMode = .fill
-//                    currentTouchedMoment.material.diffuse.contents = nil
-//                    currentTouchedMoment.material.diffuse.contents = frames[currentTouchedMoment.pathID]![currentTouchedMoment.id]
-//                    currentTouchedMoment.geometry?.firstMaterial?.diffuse.contents = self.frames[touchedMoment.pathID]![touchedMoment.id]
-                    
                     previousMoment = currentTouchedMoment
-                    
-//                    UIView.transition(with: self.previewView,
-//                                      duration: 0.5,
-//                                      options: .transitionCrossDissolve,
-//                                      animations: { self.previewView.image = self.frames[imgIdx!] },
-//                                      completion: nil)
-
 
                 }
             }
@@ -532,11 +553,11 @@ extension MainViewController: AGAudioRecorderDelegate {
             recordButton.setTitle("Recode", for: .normal)
             playButton.setTitle("Play", for: .normal)
         }
-        debugPrint(state)
+//        debugPrint(state)
     }
     
     func agAudioRecorder(_ recorder: AGAudioRecorder, currentTime timeInterval: TimeInterval, formattedString: String) {
-        debugPrint(formattedString)
+//        debugPrint(formattedString)
     }
 }
 
