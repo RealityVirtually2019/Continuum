@@ -21,10 +21,12 @@ class Moment: SCNNode {
     var id: Int!
     var image: UIImage!
     var timestamp: TimeInterval!
+    var isEdge: Bool!
+    var material: SCNMaterial!
     
     // Make width and height based on the screen proportions
     // Keep the same aspect ratio of the screen
-    init(width: CGFloat = 0.035, height: CGFloat = 0.02, content: Any, doubleSided: Bool, horizontal: Bool) {
+    init(width: CGFloat = 0.05, height: CGFloat = 0.03, content: Any, doubleSided: Bool, horizontal: Bool) {
         
         super.init()
         
@@ -32,9 +34,10 @@ class Moment: SCNNode {
         let plane = SCNPlane(width: width, height: height)
         plane.cornerRadius = 0.01/2
         self.geometry = plane
+        isEdge = false
         
         //2. Create A New Material
-        let material = SCNMaterial()
+        material = SCNMaterial()
         material.fillMode = .lines
         
         if let colour = content as? UIColor{

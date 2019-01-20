@@ -24,42 +24,28 @@
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="hEF-UM-ZzM">
                                 <rect key="frame" x="0.0" y="0.0" width="667" height="375"/>
                             </imageView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Mey-Cv-pg2">
-                                <rect key="frame" x="546" y="20" width="45" height="30"/>
-                                <state key="normal" title="record"/>
-                                <connections>
-                                    <action selector="recordTapped:" destination="BV1-FR-VrT" eventType="touchUpInside" id="loY-pM-Yfa"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="T3h-9j-liO">
-                                <rect key="frame" x="617" y="20" width="30" height="30"/>
-                                <state key="normal" title="play"/>
-                                <connections>
-                                    <action selector="playTapped:" destination="BV1-FR-VrT" eventType="touchUpInside" id="0uH-Pw-bRX"/>
-                                </connections>
-                            </button>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vus-eD-5EI">
+                                <rect key="frame" x="273" y="127" width="121" height="121"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="leading" secondItem="BrB-h1-WRS" secondAttribute="leading" id="GJW-ba-wDd"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="bottom" secondItem="BrB-h1-WRS" secondAttribute="bottom" id="Ny0-pH-5Ly"/>
-                            <constraint firstItem="T3h-9j-liO" firstAttribute="trailing" secondItem="U0K-SW-4ec" secondAttribute="trailingMargin" id="Pec-qh-d3o"/>
-                            <constraint firstItem="Mey-Cv-pg2" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" constant="546" id="Rnh-KL-j58"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" id="VpT-BR-CcM"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="top" secondItem="BrB-h1-WRS" secondAttribute="top" id="cM6-xJ-aKT"/>
-                            <constraint firstItem="Mey-Cv-pg2" firstAttribute="baseline" secondItem="T3h-9j-liO" secondAttribute="baseline" id="gLV-av-g3x"/>
-                            <constraint firstItem="Mey-Cv-pg2" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" constant="20" symbolic="YES" id="naS-qt-IZF"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="trailing" secondItem="BrB-h1-WRS" secondAttribute="trailing" id="ZpF-qd-Woj"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="bottom" secondItem="BrB-h1-WRS" secondAttribute="bottom" id="kA9-5l-eTL"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="leading" secondItem="BrB-h1-WRS" secondAttribute="leading" id="ohH-5P-BMa"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
-                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="trailing" secondItem="BrB-h1-WRS" secondAttribute="trailing" id="xBc-8v-2Ho"/>
+                            <constraint firstItem="hEF-UM-ZzM" firstAttribute="top" secondItem="BrB-h1-WRS" secondAttribute="top" id="vHC-on-oeh"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                     </view>
                     <connections>
-                        <outlet property="playButton" destination="T3h-9j-liO" id="Yx7-Sn-mtd"/>
                         <outlet property="previewView" destination="hEF-UM-ZzM" id="ne7-8K-8Rt"/>
-                        <outlet property="recordButton" destination="Mey-Cv-pg2" id="ZTZ-ew-Zrz"/>
+                        <outlet property="recordingCircle" destination="vus-eD-5EI" id="rbq-Fn-K9l"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
                     </connections>
                 </viewController>

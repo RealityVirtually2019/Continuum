@@ -19,6 +19,12 @@ import ARKit
 // 3: Selecting paths
 // 3: Focusing / darening
 // REDO IMAGES BEING STORED BY PATH ID
+extension UIView {
+    func makeCircular() {
+        self.layer.cornerRadius = min(self.frame.size.height, self.frame.size.width) / 2.0
+        self.clipsToBounds = true
+    }
+}
 
 class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
 
@@ -37,6 +43,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     var audioFiles: [String] = [String]()
     
     // Store the currently recorded moments
+    var allMoments: [Moment] = [Moment]()
     var currentMoments: [Moment] = [Moment]()
     
     var previousMoment: Moment! {
@@ -74,11 +81,23 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     @IBOutlet weak var recordButton: UIButton!
     @IBOutlet weak var playButton: UIButton!
     
+    @IBOutlet weak var recordingCircle: UIView! {
+        didSet {
+            recordingCircle.makeCircular()
+            var visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
+            visualEffectView.frame = recordingCircle.bounds
+            recordingCircle.addSubview(visualEffectView)
+            self.recordingCircle.backgroundColor = UIColor.white
+            self.recordingCircle.layer.opacity = 0.15
+        }
+    }
+    
+    @IBOutlet weak var statusLabel: UILabel!
     @IBOutlet var sceneView: ARSCNView!
     @IBOutlet weak var previewView: UIImageView! {
         didSet {
             let maskLayer = CAShapeLayer()
-            let scaleFactor: CGFloat = 1.5
+            let scaleFactor: CGFloat = 1.75
             
             let width = UIScreen.main.bounds.width/scaleFactor
             let height = UIScreen.main.bounds.height/scaleFactor
@@ -150,8 +169,17 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // Began is used to ADD content once the settings are adjusted
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = true
-        recorder.changeFile(withFileName: "\(currentMoments.count)")
+        recorder.changeFile(withFileName: "\(paths.count)")
         recorder.doRecord()
+        
+        UIView.animate(withDuration: 0.75, delay:0, options: [.repeat, .autoreverse], animations: {
+            self.recordingCircle.backgroundColor = UIColor.red
+            self.recordingCircle.layer.opacity = 1
+        }, completion: nil)
+    }
+    
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
     }
     
     // Access a frame by accessing path then frame index
@@ -163,6 +191,13 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         recorder.doStopRecording()
         // Store the current moments
         paths.append(currentMoments)
+        currentMoments.removeAll()
+        
+        UIView.animate(withDuration: 0.25) {
+            self.recordingCircle.backgroundColor = UIColor.white
+            self.recordingCircle.layer.opacity = 0.25
+        }
+        recordingCircle.layer.removeAllAnimations()
     }
     
     // MARK: Helper methods for adding content
@@ -180,7 +215,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         frames.append(currentImage)
         
         // It's storing them inside the
-        let moment = Moment(content: UIColor.white.withAlphaComponent(0.95), doubleSided: true, horizontal: false)
+        let moment = Moment(content: UIColor.white, doubleSided: true, horizontal: false)
         moment.position = position
         
         // Do better with IDs, maybe make a dictionary with UUIDs?
@@ -195,6 +230,13 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         moment.simdTransform = frame.camera.transform
         
         self.sceneView.scene.rootNode.addChildNode(moment)
+        
+        if currentMoments.count == 0 {
+            moment.isEdge = true
+            moment.material.fillMode = .fill
+        }
+        
+        allMoments.append(moment)
         currentMoments.append(moment)
     }
     
@@ -252,7 +294,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     // Need to check if camera position is touching one of the moments nodes
                     // distance between camera and position
                     // Need to make this less sensitive
-                    guard let touchedMoment = currentMoments.first(where: { distance($0.position, cameraNode.position) < 0.025 }) else {
+                    guard let touchedMoment = allMoments.first(where: { distance($0.position, cameraNode.position) < 0.040 }) else {
                         self.previewView.image = nil
                         self.isPlaying = false
                         UIView.animate(withDuration: 0.25) {
