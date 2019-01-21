@@ -232,7 +232,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         sceneView.session.delegate = self
         
         // Show statistics such as fps and timing information
-        sceneView.showsStatistics = true
+//        sceneView.showsStatistics = true
         
         // Create a new scene
         let scene = SCNScene()
@@ -274,9 +274,10 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = true
         
-        stateChanged(state: .recording)
-        recorder.changeFile(withFileName: "\(paths.count)")
-        recorder.doRecord()
+        if allMoments.count < 90 {
+            stateChanged(state: .recording)
+            recorder.changeFile(withFileName: "\(paths.count)")
+            recorder.doRecord()
         
         
         let touch = touches.first as! UITouch
@@ -285,12 +286,15 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             UIView.animate(withDuration: 0.25) {
                 self.recordingCircle.transform = CGAffineTransform(scaleX: 1.25, y: 1.25)
                 self.recordingCircle.center = viewTouchLocation
+                self.recordingCircle.layer.opacity = 1
             }
         }
-        
-        UIView.animate(withDuration: 0.75, delay:0, options: [.repeat, .autoreverse], animations: {
-            self.recordingCircle.layer.opacity = 1
-        }, completion: nil)
+//
+//            UIView.animate(withDuration: 0.75, delay:0, options: [.repeat, .autoreverse], animations: {
+//                self.recordingCircle.layer.opacity = 1
+//            }, completion: nil)
+//
+        }
     }
     
     // Access a frame by accessing path then frame index
@@ -470,7 +474,7 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             return true
         }
         
-        if currentMoments.count > 20 {
+        if currentMoments.count > 30 {
             endRecording()
             return false
         }
@@ -502,7 +506,9 @@ class MainViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
 
                 if isTouching && interactionState == .recording {
                     if canAddContent(position: adjustedPos) {
-                        addContent(position: adjustedPos)
+                        if allMoments.count < 90 {
+                            addContent(position: adjustedPos)
+                        }
                     }
                 } else {
                     
